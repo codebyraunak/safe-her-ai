@@ -42,7 +42,7 @@ pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
 
-API docs available at: http://localhost:8000/docs
+API docs available at: 
 
 ### 2. Frontend
 
@@ -52,7 +52,7 @@ npm install
 npm run dev
 ```
 
-App runs at: http://localhost:5173
+App runs at: 
 
 ---
 
