@@ -125,3 +125,47 @@ def sos_log():
 @app.get("/api/sos/nearest-station")
 def nearest_station(lat: float, lng: float):
     return find_nearest_station(lat, lng)
+@app.post("/api/route/find-safe")
+def find_safe_route(req: RouteRequest):
+    import requests as req_lib
+    
+    start = req.waypoints[0]
+    end = req.waypoints[-1]
+    
+    ORS_KEY = "YOUR_FREE_ORS_KEY"  # get from openrouteservice.org
+    
+    try:
+        res = req_lib.get(
+            "https://api.openrouteservice.org/v2/directions/driving-car/geojson",
+            headers={"Authorization": ORS_KEY},
+            json={
+                "coordinates": [[start.lng, start.lat], [end.lng, end.lat]],
+                "alternative_routes": {"share_factor": 0.6, "target_count": 3}
+            }
+        )
+        routes_data = res.json()["features"]
+    except:
+        routes_data = []
+
+    scored_routes = []
+    for i, route in enumerate(routes_data):
+        coords = route["geometry"]["coordinates"]
+        # sample 5 points along route
+        step = max(1, len(coords) // 5)
+        waypoints = [{"lat": c[1], "lng": c[0]} for c in coords[::step]][:5]
+        score_result = score_route(waypoints, req.hour or 12, req.day_of_week or 0)
+        scored_routes.append({
+            "route_index": i,
+            "coordinates": [[c[1], c[0]] for c in coords],
+            "score": score_result["score"],
+            "label": score_result["label"],
+            "avg_risk": score_result["avg_risk"],
+            "distance_m": route["properties"]["segments"][0]["distance"],
+            "duration_s": route["properties"]["segments"][0]["duration"],
+        })
+
+    scored_routes.sort(key=lambda x: x["score"], reverse=True)
+    if scored_routes:
+        scored_routes[0]["is_safest"] = True
+
+    return {"routes": scored_routes, "total": len(scored_routes)}
