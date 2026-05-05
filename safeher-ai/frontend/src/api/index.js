@@ -32,3 +32,5 @@ export const getSOSLog = () => api("/api/sos/log");
 
 export const getNearestStation = (lat, lng) =>
   api(`/api/sos/nearest-station?lat=${lat}&lng=${lng}`);
+export const findSafeRoute = (waypoints, hour, day_of_week) =>
+  api("/api/route/find-safe", "POST", { waypoints, hour, day_of_week });
