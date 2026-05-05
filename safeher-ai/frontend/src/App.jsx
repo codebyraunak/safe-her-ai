@@ -55,7 +55,7 @@ export default function App() {
         {/* Footer */}
         <div className="p-4 border-t border-slate-800">
           <p className="text-xs text-slate-600">SafeHer AI v1.0</p>
-          <p className="text-xs text-slate-600">Hackathon Build 2025</p>
+         
         </div>
       </aside>
 
