@@ -8,12 +8,28 @@ import os
 DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "incidents.csv")
 
 # ── Load & train ──────────────────────────────────────────────────────────────
+
 def load_and_train():
+    # FIX: Raise a clear error if the CSV is missing instead of a cryptic crash
+    if not os.path.exists(DATA_PATH):
+        raise FileNotFoundError(
+            f"Training data not found at: {DATA_PATH}\n"
+            "Please place incidents.csv inside the backend/data/ directory."
+        )
+
     df = pd.read_csv(DATA_PATH)
 
-    le = LabelEncoder()
-    df["incident_enc"] = le.fit_transform(df["incident_type"])
-    df["lighting_enc"] = le.fit_transform(df["lighting"])
+    required_cols = {"incident_type", "lighting", "hour", "day_of_week", "risk_level", "lat", "lng"}
+    missing = required_cols - set(df.columns)
+    if missing:
+        raise ValueError(f"incidents.csv is missing required columns: {missing}")
+
+    # FIX: Use separate LabelEncoders so one does not overwrite the other
+    incident_le = LabelEncoder()
+    lighting_le = LabelEncoder()
+
+    df["incident_enc"] = incident_le.fit_transform(df["incident_type"])
+    df["lighting_enc"] = lighting_le.fit_transform(df["lighting"])
 
     features = ["incident_enc", "hour", "day_of_week", "lighting_enc"]
     X = df[features]
@@ -21,11 +37,16 @@ def load_and_train():
 
     model = RandomForestClassifier(n_estimators=100, random_state=42)
     model.fit(X, y)
-    return model, df, le
 
-MODEL, DF, LE = load_and_train()
+    return model, df, incident_le, lighting_le
+
+
+MODEL, DF, INCIDENT_LE, LIGHTING_LE = load_and_train()
+
+RISK_LABELS = ["Very Low", "Low", "Moderate", "High", "Critical"]
 
 # ── DBSCAN hotspot clustering ─────────────────────────────────────────────────
+
 def get_hotspot_clusters():
     coords = DF[["lat", "lng"]].values
     coords_rad = np.radians(coords)
@@ -49,40 +70,56 @@ def get_hotspot_clusters():
     return clusters
 
 # ── Predict risk for a zone ───────────────────────────────────────────────────
-def predict_zone_risk(lat: float, lng: float, hour: int, day_of_week: int, lighting: str = "dim"):
-    try:
-        lighting_enc = LE.transform([lighting])[0]
-    except Exception:
-        lighting_enc = 1
 
-    # Find nearest incidents
+def predict_zone_risk(lat: float, lng: float, hour: int, day_of_week: int, lighting: str = "dim") -> dict:
+    # FIX: Use LIGHTING_LE (not INCIDENT_LE) for lighting encoding; fall back gracefully
+    known_lightings = list(LIGHTING_LE.classes_)
+    if lighting not in known_lightings:
+        lighting_enc = known_lightings.index("dim") if "dim" in known_lightings else 0
+    else:
+        lighting_enc = int(LIGHTING_LE.transform([lighting])[0])
+
+    # Find nearest incident row by Euclidean distance on lat/lng
     dists = np.sqrt((DF["lat"] - lat) ** 2 + (DF["lng"] - lng) ** 2)
     nearest = DF.loc[dists.idxmin()]
-    incident_enc = nearest["incident_enc"]
+    incident_enc = int(nearest["incident_enc"])
 
-    features = pd.DataFrame([[incident_enc, hour, day_of_week, lighting_enc]],
-                            columns=["incident_enc", "hour", "day_of_week", "lighting_enc"])
+    features = pd.DataFrame(
+        [[incident_enc, hour, day_of_week, lighting_enc]],
+        columns=["incident_enc", "hour", "day_of_week", "lighting_enc"],
+    )
     risk = int(MODEL.predict(features)[0])
     proba = MODEL.predict_proba(features)[0]
+
+    risk_idx = min(risk - 1, len(RISK_LABELS) - 1)
+    risk_idx = max(risk_idx, 0)  # FIX: Guard against risk_level = 0 causing index -1
 
     return {
         "lat": lat,
         "lng": lng,
         "risk_level": risk,
-        "risk_label": ["Very Low", "Low", "Moderate", "High", "Critical"][min(risk - 1, 4)],
-        "confidence": float(max(proba)),
+        "risk_label": RISK_LABELS[risk_idx],
+        "confidence": round(float(max(proba)), 4),
         "hour": hour,
+        "day_of_week": day_of_week,
         "lighting": lighting,
     }
 
 # ── Generate heatmap grid ─────────────────────────────────────────────────────
-def generate_heatmap(center_lat: float, center_lng: float, hour: int, day_of_week: int):
+
+def generate_heatmap(center_lat: float, center_lng: float, hour: int, day_of_week: int) -> list:
     points = []
     for dlat in np.arange(-0.02, 0.022, 0.005):
         for dlng in np.arange(-0.02, 0.022, 0.005):
-            lat = round(center_lat + dlat, 5)
-            lng = round(center_lng + dlng, 5)
-            lighting = "none" if hour >= 21 or hour <= 5 else "dim" if hour >= 18 else "good"
+            lat = round(center_lat + float(dlat), 5)
+            lng = round(center_lng + float(dlng), 5)
+            # Determine lighting based on time of day
+            if hour >= 21 or hour <= 5:
+                lighting = "none"
+            elif hour >= 18:
+                lighting = "dim"
+            else:
+                lighting = "good"
             result = predict_zone_risk(lat, lng, hour, day_of_week, lighting)
             points.append({
                 "lat": lat,
@@ -93,16 +130,18 @@ def generate_heatmap(center_lat: float, center_lng: float, hour: int, day_of_wee
     return points
 
 # ── Route safety score ────────────────────────────────────────────────────────
-def score_route(waypoints: list, hour: int, day_of_week: int):
+
+def score_route(waypoints: list, hour: int, day_of_week: int) -> dict:
+    if not waypoints:
+        return {"score": 100, "label": "Unknown", "avg_risk": 0.0, "zone_breakdown": []}
+
     scores = []
     for wp in waypoints:
         result = predict_zone_risk(wp["lat"], wp["lng"], hour, day_of_week)
         scores.append(result["risk_level"])
 
-    if not scores:
-        return {"score": 100, "label": "Unknown", "risk_level": 0}
-
-    avg_risk = np.mean(scores)
+    avg_risk = float(np.mean(scores))
+    # FIX: Use consistent max risk scale (5) to compute safety score
     safety_score = max(0, int(100 - (avg_risk / 5) * 100))
 
     if safety_score >= 80:

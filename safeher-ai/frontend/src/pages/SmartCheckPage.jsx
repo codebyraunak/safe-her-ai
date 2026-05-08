@@ -30,6 +30,7 @@ export default function SmartCheckPage({ userInfo, onEditProfile }) {
   const [message, setMessage] = useState("");
   const [result, setResult] = useState(null);
   const [timerMinutes, setTimerMinutes] = useState(15);
+  const [editingHome, setEditingHome] = useState(false);
   const intervalRef = useRef(null);
   const timeoutRef = useRef(null);
 
@@ -63,7 +64,15 @@ export default function SmartCheckPage({ userInfo, onEditProfile }) {
   const saveHomeLocation = () => {
     localStorage.setItem("safeher_home_location", JSON.stringify(currentPos));
     setHomePos(currentPos);
+    setEditingHome(false);
     setMessage("Home location saved. You can now start smart monitoring.");
+  };
+
+  const clearHomeLocation = () => {
+    localStorage.removeItem("safeher_home_location");
+    setHomePos(null);
+    setEditingHome(false);
+    setMessage("Home location cleared.");
   };
 
   const clearMonitoring = () => {
@@ -149,15 +158,54 @@ export default function SmartCheckPage({ userInfo, onEditProfile }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1">
         <div className="bg-slate-800/60 rounded-2xl p-6 border border-slate-700 space-y-4">
-          <div className="rounded-2xl bg-slate-900/50 p-4 border border-slate-700">
-            <p className="text-sm text-slate-400">Home location</p>
-            <p className="text-white mt-2">{homePos ? `${homePos[0].toFixed(5)}, ${homePos[1].toFixed(5)}` : "Not set"}</p>
-            <button
-              onClick={saveHomeLocation}
-              className="mt-4 px-4 py-3 rounded-xl bg-pink-600 hover:bg-pink-500 text-white text-sm w-full"
-            >
-              Save current position as home location
-            </button>
+          <div className="rounded-2xl bg-slate-900/50 p-4 border border-slate-700 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-slate-400">Home location</p>
+              {homePos && !editingHome && (
+                <button
+                  onClick={() => setEditingHome(true)}
+                  className="text-xs text-pink-400 hover:text-pink-300 border border-pink-500/30 px-2 py-1 rounded-lg transition"
+                >
+                  ✏️ Edit
+                </button>
+              )}
+            </div>
+
+            {homePos && !editingHome ? (
+              <>
+                <p className="text-white font-mono text-sm">{homePos[0].toFixed(5)}, {homePos[1].toFixed(5)}</p>
+                <p className="text-xs text-emerald-400">✅ Home location is set</p>
+              </>
+            ) : (
+              <>
+                <p className="text-white font-mono text-sm">{currentPos[0].toFixed(5)}, {currentPos[1].toFixed(5)}</p>
+                <p className="text-xs text-slate-500">Your current GPS position will be saved as home</p>
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    onClick={saveHomeLocation}
+                    className="flex-1 px-4 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-500 text-white text-sm transition"
+                  >
+                    {homePos ? "Update home location" : "Save as home location"}
+                  </button>
+                  {homePos && editingHome && (
+                    <>
+                      <button
+                        onClick={() => setEditingHome(false)}
+                        className="px-4 py-2.5 rounded-xl border border-slate-600 text-slate-300 text-sm hover:bg-slate-700 transition"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={clearHomeLocation}
+                        className="px-4 py-2.5 rounded-xl border border-red-500/40 text-red-400 text-sm hover:bg-red-900/20 transition"
+                      >
+                        Clear
+                      </button>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
           <div className="rounded-2xl bg-slate-900/50 p-4 border border-slate-700">
