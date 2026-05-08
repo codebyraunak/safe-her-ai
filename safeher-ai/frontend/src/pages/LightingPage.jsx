@@ -18,6 +18,7 @@ const getStatusColor = (zone) => {
 };
 
 export default function LightingPage() {
+  const [center,   setCenter]   = useState(DEFAULT_CENTER);
   const [zones,    setZones]    = useState([]);
   const [savings,  setSavings]  = useState(null);
   const [hour,     setHour]     = useState(new Date().getHours());
@@ -25,12 +26,22 @@ export default function LightingPage() {
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState("");
 
+  // Try to get real location
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        p => setCenter([p.coords.latitude, p.coords.longitude]),
+        () => {}
+      );
+    }
+  }, []);
+
   const fetchData = async () => {
     setLoading(true);
     setError("");
     try {
       const [lm, sv] = await Promise.all([
-        getLightingMap(DEFAULT_CENTER[0], DEFAULT_CENTER[1], hour),
+        getLightingMap(center[0], center[1], hour),
         getLightingSavings(49),
       ]);
       setZones(lm.zones || []);
@@ -42,7 +53,7 @@ export default function LightingPage() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [center]);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60_000);
@@ -137,7 +148,7 @@ export default function LightingPage() {
 
       {/* Map */}
       <div className="flex-1 rounded-2xl overflow-hidden border border-slate-700 min-h-[380px]">
-        <MapContainer center={DEFAULT_CENTER} zoom={14} style={{ height: "100%", width: "100%" }}>
+        <MapContainer center={center} zoom={14} style={{ height: "100%", width: "100%" }}>
           <TileLayer
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             attribution='&copy; OpenStreetMap &copy; CartoDB'
