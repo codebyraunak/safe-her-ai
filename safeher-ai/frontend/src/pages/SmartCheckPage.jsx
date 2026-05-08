@@ -29,6 +29,7 @@ export default function SmartCheckPage({ userInfo, onEditProfile }) {
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
   const [result, setResult] = useState(null);
+  const [timerMinutes, setTimerMinutes] = useState(15);
   const intervalRef = useRef(null);
   const timeoutRef = useRef(null);
 
@@ -75,7 +76,7 @@ export default function SmartCheckPage({ userInfo, onEditProfile }) {
   const stopMonitoring = () => {
     clearMonitoring();
     setStatus("idle");
-    setCountdown(CHECK_SECONDS);
+    setCountdown(timerMinutes * 60);
   };
 
   const startMonitoring = () => {
@@ -88,10 +89,11 @@ export default function SmartCheckPage({ userInfo, onEditProfile }) {
       return;
     }
 
+    const timerSeconds = timerMinutes * 60;
     setStatus("pending");
     setMessage("Smart Check is active. Tap SAFE if you are okay before the timer expires.");
     setResult(null);
-    setCountdown(CHECK_SECONDS);
+    setCountdown(timerSeconds);
 
     intervalRef.current = setInterval(() => {
       setCountdown((prev) => Math.max(prev - 1, 0));
@@ -99,7 +101,7 @@ export default function SmartCheckPage({ userInfo, onEditProfile }) {
 
     timeoutRef.current = setTimeout(() => {
       triggerAlarm();
-    }, CHECK_SECONDS * 1000);
+    }, timerSeconds * 1000);
   };
 
   const confirmSafe = () => {
@@ -113,7 +115,7 @@ export default function SmartCheckPage({ userInfo, onEditProfile }) {
     clearMonitoring();
     setStatus("alerted");
     setMessage(
-      `No response within 15 minutes. Alert triggered to ${userInfo?.emergency_contact || "your emergency contact"}.`,
+      `No response within ${timerMinutes} minutes. Alert triggered to ${userInfo?.emergency_contact || "your emergency contact"}.`,
     );
 
     try {
@@ -194,9 +196,65 @@ export default function SmartCheckPage({ userInfo, onEditProfile }) {
           </div>
 
           <div className="rounded-2xl bg-slate-900/50 p-4 border border-slate-700">
+            <p className="text-sm text-slate-400">Timer Duration</p>
+            <div className="flex items-center gap-3 mt-3">
+              <input
+                type="number"
+                min="1"
+                max="60"
+                value={timerMinutes}
+                onChange={(e) => {
+                  const value = Math.max(1, Math.min(60, parseInt(e.target.value) || 1));
+                  setTimerMinutes(value);
+                  if (status === "idle") {
+                    setCountdown(value * 60);
+                  }
+                }}
+                disabled={status === "pending"}
+                className="w-20 px-3 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:outline-none focus:border-pink-500 disabled:opacity-50"
+              />
+              <span className="text-white">minutes</span>
+            </div>
+            <p className="text-xs text-slate-500 mt-2">Set how long to wait before triggering an alert if you don't confirm safety.</p>
+          </div>
+
+          <div className="rounded-2xl bg-slate-900/50 p-4 border border-slate-700">
             <p className="text-sm text-slate-400">Timer</p>
-            <p className="text-4xl font-bold text-white mt-3">{status === "pending" ? formatTime(countdown) : "15:00"}</p>
-            <p className="text-xs text-slate-500 mt-2">If you don't confirm safety before the timer runs out, the app will trigger an alert.</p>
+            <div className="flex items-center justify-center mt-3">
+              <div className="relative">
+                <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    stroke="#374151"
+                    strokeWidth="8"
+                    fill="none"
+                  />
+                  {status === "pending" && (
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="45"
+                      stroke={countdown < 300 ? "#ef4444" : countdown < 600 ? "#f59e0b" : "#22c55e"}
+                      strokeWidth="8"
+                      fill="none"
+                      strokeLinecap="round"
+                      strokeDasharray={`${2 * Math.PI * 45}`}
+                      strokeDashoffset={`${2 * Math.PI * 45 * (1 - countdown / (timerMinutes * 60))}`}
+                      className="transition-all duration-1000 ease-linear"
+                    />
+                  )}
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-white">{status === "pending" ? formatTime(countdown) : formatTime(timerMinutes * 60)}</p>
+                    <p className="text-xs text-slate-500">minutes</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-slate-500 mt-2 text-center">If you don't confirm safety before the timer runs out, the app will trigger an alert.</p>
           </div>
 
           {message && (
@@ -240,7 +298,7 @@ export default function SmartCheckPage({ userInfo, onEditProfile }) {
             <ul className="mt-3 space-y-2 list-disc list-inside text-slate-400">
               <li>Save your home location.</li>
               <li>Start Smart Check before you leave.</li>
-              <li>If you do not confirm safe within 15 minutes, the app triggers an alert.</li>
+              <li>If you do not confirm safe within the set time, the app triggers an alert.</li>
               <li>The alert includes your emergency contact and medical details.</li>
             </ul>
           </div>
