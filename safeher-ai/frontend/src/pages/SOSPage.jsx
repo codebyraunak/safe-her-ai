@@ -11,6 +11,7 @@ export default function SOSPage({ userInfo, onEditProfile }) {
   const [result,   setResult]   = useState(null);
   const [log,      setLog]      = useState([]);
   const [station,  setStation]  = useState(null);
+  const [stations, setStations] = useState([]);
   const [sending,  setSending]  = useState(false);
   const [error,    setError]    = useState("");
   const [helpers,  setHelpers]  = useState([]);
@@ -25,10 +26,13 @@ export default function SOSPage({ userInfo, onEditProfile }) {
     }
   }, []);
 
-  // Load nearest station on position change
+  // Load nearest station and station list on position change
   useEffect(() => {
     getNearestStation(pos[0], pos[1])
-      .then(setStation)
+      .then((data) => {
+        setStation(data.nearest_station || null);
+        setStations(data.stations || []);
+      })
       .catch(() => {});
   }, [pos]);
 
@@ -88,6 +92,23 @@ export default function SOSPage({ userInfo, onEditProfile }) {
               <p className="text-xs text-blue-400 font-semibold mb-1">NEAREST POLICE STATION</p>
               <p className="text-white font-semibold">{station.name}</p>
               <p className="text-slate-400 text-sm">{station.distance_km} km away · {station.contact}</p>
+            </div>
+          )}
+
+          {stations.length > 0 && (
+            <div className="bg-blue-900/20 border border-blue-500/30 rounded-xl p-4">
+              <p className="text-xs text-blue-300 font-semibold mb-3">ALL NEARBY POLICE STATIONS</p>
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {stations.map((stationItem, i) => (
+                  <div key={stationItem.id || i} className="rounded-xl bg-slate-900/60 p-3 border border-slate-700">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-white">{stationItem.name}</p>
+                      <span className="text-xs text-slate-400">{stationItem.distance_km} km</span>
+                    </div>
+                    <p className="text-slate-400 text-xs mt-1">{stationItem.contact}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -219,18 +240,24 @@ export default function SOSPage({ userInfo, onEditProfile }) {
             >
               <Popup><strong>Your Location</strong></Popup>
             </Circle>
-            {station && (
+            {stations.map((stationItem, i) => (
               <Circle
-                center={[station.lat, station.lng]}
+                key={stationItem.id || i}
+                center={[stationItem.lat, stationItem.lng]}
                 radius={80}
-                pathOptions={{ color: "#3b82f6", fillColor: "#3b82f6", fillOpacity: 0.5 }}
+                pathOptions={{
+                  color: stationItem.id === station?.id ? "#3b82f6" : "#60a5fa",
+                  fillColor: stationItem.id === station?.id ? "#3b82f6" : "#60a5fa",
+                  fillOpacity: stationItem.id === station?.id ? 0.6 : 0.25,
+                }}
               >
                 <Popup>
-                  <strong>{station.name}</strong><br />
-                  {station.distance_km} km away
+                  <strong>{stationItem.name}</strong><br />
+                  {stationItem.distance_km} km away<br />
+                  {stationItem.contact}
                 </Popup>
               </Circle>
-            )}
+            ))}
           </MapContainer>
         </div>
       </div>

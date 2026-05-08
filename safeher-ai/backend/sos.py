@@ -42,6 +42,13 @@ def find_nearest_station(lat: float, lng: float) -> dict:
     dist = haversine_dist(lat, lng, nearest["lat"], nearest["lng"])
     return {**nearest, "distance_km": round(dist, 2)}
 
+def find_all_stations(lat: float, lng: float) -> list:
+    stations = [
+        {**station, "distance_km": round(haversine_dist(lat, lng, station["lat"], station["lng"]), 2)}
+        for station in POLICE_STATIONS
+    ]
+    return sorted(stations, key=lambda s: s["distance_km"])
+
 def trigger_sos(lat: float, lng: float, user_name: str = "Anonymous", message: str = "", emergency_contact: str = "", medical_details: str = "") -> dict:
     station = find_nearest_station(lat, lng)
     alert_id = f"SOS-{random.randint(10000, 99999)}"

@@ -15,7 +15,7 @@ from lighting import (
     generate_lighting_map,
     calculate_city_savings,
 )
-from sos import trigger_sos, get_sos_log, find_nearest_station
+from sos import trigger_sos, get_sos_log, find_nearest_station, find_all_stations
 from users import register_user, find_nearest_user
 
 app = FastAPI(title="SafeHer AI API", version="1.0.0")
@@ -151,7 +151,11 @@ def sos_log():
 
 @app.get("/api/sos/nearest-station")
 def nearest_station(lat: float, lng: float):
-    return find_nearest_station(lat, lng)
+    stations = find_all_stations(lat, lng)
+    return {
+        "nearest_station": stations[0] if stations else None,
+        "stations": stations,
+    }
 
 @app.post("/api/route/find-safe")
 def find_safe_route(req: RouteRequest):
