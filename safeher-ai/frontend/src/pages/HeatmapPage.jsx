@@ -50,16 +50,16 @@ export default function HeatmapPage() {
           <h1 className="text-2xl font-bold text-white">Safety Heatmap</h1>
           <p className="text-sm text-slate-400">AI-predicted risk zones for women — updated in real time</p>
         </div>
-        <div className="flex items-center gap-3">
-          <label className="text-sm text-slate-400">Time of day:</label>
-          <input
-            type="range" min={0} max={23} value={hour}
-            onChange={e => setHour(Number(e.target.value))}
-            className="w-32 accent-pink-500"
-          />
-          <span className="text-white font-mono text-sm w-14">
-            {String(hour).padStart(2, "0")}:00
-          </span>
+       <div className="flex items-center gap-3">
+         <label className="text-sm text-slate-400">Time of day:</label>
+      <input
+       type="range" min={0} max={23} value={hour}
+      onChange={e => setHour(Number(e.target.value))}
+       className="w-32 accent-pink-500"
+        />
+  <span className="text-white font-mono text-sm w-14">
+    {String(hour).padStart(2, "0")}:00
+  </span>
           <button
             onClick={fetchHeatmap}
             disabled={loading}
