@@ -1,14 +1,27 @@
 from datetime import datetime
 import random
+import csv
+from pathlib import Path
 
-# ── Simulated police stations ─────────────────────────────────────────────────
-POLICE_STATIONS = [
-    {"id": 1, "name": "Koramangala Police Station", "lat": 12.9352, "lng": 77.6245, "contact": "+91-80-22943225"},
-    {"id": 2, "name": "Indiranagar Police Station", "lat": 12.9784, "lng": 77.6408, "contact": "+91-80-25200917"},
-    {"id": 3, "name": "MG Road Police Station",     "lat": 12.9758, "lng": 77.6065, "contact": "+91-80-22212121"},
-    {"id": 4, "name": "Jayanagar Police Station",   "lat": 12.9300, "lng": 77.5832, "contact": "+91-80-26534343"},
-    {"id": 5, "name": "Whitefield Police Station",  "lat": 12.9698, "lng": 77.7500, "contact": "+91-80-28452020"},
-]
+# ── Load full police station dataset from CSV ─────────────────────────────────
+POLICE_STATIONS_FILE = Path(__file__).resolve().parent / "data" / "police_stations.csv"
+
+def load_police_stations():
+    stations = []
+    if POLICE_STATIONS_FILE.exists():
+        with POLICE_STATIONS_FILE.open(newline='', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                stations.append({
+                    "id": int(row["id"]),
+                    "name": row["name"],
+                    "lat": float(row["lat"]),
+                    "lng": float(row["lng"]),
+                    "contact": row.get("contact", ""),
+                })
+    return stations
+
+POLICE_STATIONS = load_police_stations()
 
 # In-memory SOS log (use DB in production)
 SOS_LOG = []

@@ -63,8 +63,8 @@ export default function LightingPage() {
                 <p className="text-sm text-slate-400 uppercase tracking-[0.18em]">Street lighting time</p>
                 <p className="text-lg font-semibold text-white">Simulate how the city looks at different hours</p>
               </div>
-              <div className="rounded-full bg-slate-800 px-3 py-2 text-sm font-semibold text-black border border-slate-700 text-white">
-                Now: {currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              <div className="rounded-full bg-slate-800 px-3 py-2 text-sm font-semibold text-white border border-slate-700">
+                Selected: {String(hour).padStart(2, "0")}:00
               </div>
             </div>
 
@@ -89,9 +89,11 @@ export default function LightingPage() {
           </div>
 
           <div className="flex flex-col justify-center gap-3 rounded-3xl border border-slate-700/80 bg-slate-950/60 p-4">
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-sm text-slate-400">Selected hour</span>
-              <span className="rounded-full bg-amber-400/15 px-3 py-1 text-sm font-semibold text-amber-200">{String(hour).padStart(2, "0")}:00</span>
+            <div className="rounded-3xl bg-slate-900/80 p-5 border border-slate-700 text-center">
+              <p className="text-xs text-slate-400 uppercase tracking-[0.16em]">Current time</p>
+              <p className="text-4xl font-bold text-white mt-3">{currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>
+              <p className="text-xs text-slate-500 mt-3 uppercase tracking-[0.16em]">Selected hour</p>
+              <p className="text-xl font-semibold text-amber-200 mt-1">{String(hour).padStart(2, "0")}:00</p>
             </div>
             <button
               onClick={fetchData}

@@ -147,12 +147,14 @@ export default function RoutePage() {
               <p className="text-xs text-slate-400 uppercase tracking-[0.16em]">Departure time</p>
               <p className="text-sm text-white">Plan for the safest hour</p>
             </div>
-            <span className="rounded-full bg-pink-500/15 px-3 py-1 text-sm font-semibold text-pink-200">Now: {currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+            <span className="rounded-full bg-pink-500/15 px-3 py-1 text-sm font-semibold text-pink-200">Selected: {String(hour).padStart(2, "0")}:00</span>
           </div>
           <div className="space-y-3">
-            <div className="rounded-3xl bg-slate-950/70 border border-slate-700 p-4 text-center">
-              <p className="text-xs text-slate-500 uppercase tracking-[0.14em]">Selected hour</p>
-              <p className="text-2xl font-bold text-white mt-2">{String(hour).padStart(2, "0")}:00</p>
+            <div className="rounded-3xl bg-slate-950/70 border border-slate-700 p-5 text-center">
+              <p className="text-xs text-slate-400 uppercase tracking-[0.14em]">Current time</p>
+              <p className="text-4xl font-bold text-white mt-3">{currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>
+              <p className="text-xs text-slate-500 mt-3 uppercase tracking-[0.14em]">Selected hour</p>
+              <p className="text-xl font-semibold text-pink-300 mt-1">{String(hour).padStart(2, "0")}:00</p>
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs text-slate-500">

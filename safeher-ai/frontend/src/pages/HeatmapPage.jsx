@@ -19,7 +19,8 @@ const DEFAULT_CENTER = [12.9716, 77.5946];
 export default function HeatmapPage({ userInfo }) {
   const [points,   setPoints]   = useState([]);
   const [hotspots, setHotspots] = useState([]);
-  const [hour,     setHour]     = useState(new Date().getHours());
+  const [selectedHour, setSelectedHour] = useState(new Date().getHours());
+  const [appliedHour, setAppliedHour] = useState(new Date().getHours());
   const [currentTime, setCurrentTime] = useState(new Date());
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState("");
@@ -32,7 +33,7 @@ export default function HeatmapPage({ userInfo }) {
     setError("");
     try {
       const [hm, hs] = await Promise.all([
-        getHeatmap(DEFAULT_CENTER[0], DEFAULT_CENTER[1], hour, new Date().getDay()),
+        getHeatmap(DEFAULT_CENTER[0], DEFAULT_CENTER[1], appliedHour, new Date().getDay()),
         getHotspots(),
       ]);
       setPoints(hm.points || []);
@@ -42,13 +43,18 @@ export default function HeatmapPage({ userInfo }) {
     } finally {
       setLoading(false);
     }
-  }, [hour]);
+  }, [appliedHour]);
 
   useEffect(() => { fetchHeatmap(); }, [fetchHeatmap]);
 
   useEffect(() => {
     setHomeSaved(Boolean(localStorage.getItem("safeher_home_location")));
   }, []);
+
+  const currentHour = currentTime.getHours();
+  const currentTimeLabel = currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const periodLabel = currentHour < 6 ? "Night" : currentHour < 12 ? "Morning" : currentHour < 18 ? "Afternoon" : "Evening";
+  const previewButtonLabel = selectedHour === appliedHour ? "Refresh current hour" : "Preview selected hour";
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60_000);
@@ -63,6 +69,13 @@ export default function HeatmapPage({ userInfo }) {
       );
     }
   }, []);
+
+  useEffect(() => {
+    if (currentHour !== appliedHour && appliedHour === selectedHour && currentHour !== selectedHour) {
+      setSelectedHour(currentHour);
+      setAppliedHour(currentHour);
+    }
+  }, [currentHour, appliedHour, selectedHour]);
 
   useEffect(() => {
     if (!currentPos) return;
@@ -87,13 +100,8 @@ export default function HeatmapPage({ userInfo }) {
                 <p className="text-sm text-slate-400 uppercase tracking-[0.18em]">Time of day</p>
                 <p className="text-lg font-semibold text-white">Choose a risk window</p>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="rounded-full bg-slate-800 px-3 py-2 text-sm font-semibold text-white border border-slate-700">
-                  {String(hour).padStart(2, "0")}:00
-                </div>
-                <div className="rounded-full bg-slate-800/80 px-3 py-2 text-sm text-slate-300 border border-slate-700">
-                  Current time: {currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                </div>
+              <div className="rounded-full bg-slate-800 px-3 py-2 text-sm font-semibold text-white border border-slate-700">
+                Selected: {String(selectedHour).padStart(2, "0")}:00
               </div>
             </div>
 
@@ -107,31 +115,29 @@ export default function HeatmapPage({ userInfo }) {
                   type="range"
                   min={0}
                   max={23}
-                  value={hour}
-                  onChange={(e) => setHour(Number(e.target.value))}
+                  value={selectedHour}
+                  onChange={(e) => setSelectedHour(Number(e.target.value))}
                   className="h-2 w-full appearance-none rounded-full bg-white/10 accent-pink-500 outline-none transition duration-200 hover:bg-white/20"
                 />
                 <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 pointer-events-none bg-gradient-to-r from-pink-500/20 via-transparent to-slate-400/10 rounded-full h-2" />
               </div>
-              <p className="text-xs text-slate-500">Slide to preview risk levels at different hours of the day.</p>
+              <p className="text-xs text-slate-500">Current data is shown automatically; use the slider to preview a different hour.</p>
             </div>
           </div>
 
           <div className="flex flex-col justify-center gap-3 rounded-3xl border border-slate-700/80 bg-slate-950/60 p-4">
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-sm text-slate-400">Current risk window</span>
-              <span className="rounded-full bg-pink-500/15 px-3 py-1 text-sm font-semibold text-pink-300">{hour < 6 ? "Night" : hour < 12 ? "Morning" : hour < 18 ? "Afternoon" : "Evening"}</span>
-            </div>
-            <div className="rounded-3xl bg-slate-900/80 p-4 border border-slate-700 text-center">
-              <p className="text-xs text-slate-400 uppercase tracking-[0.16em]">Selected hour</p>
-              <p className="text-3xl font-bold text-white mt-2">{String(hour).padStart(2, "0")}:00</p>
+            <div className="rounded-3xl bg-slate-900/80 p-5 border border-slate-700 text-center">
+              <p className="text-xs text-slate-400 uppercase tracking-[0.16em]">Current time</p>
+              <p className="text-4xl font-bold text-white mt-3">{currentTimeLabel}</p>
+              <p className="text-xs text-slate-500 mt-3 uppercase tracking-[0.16em]">Displayed data hour</p>
+              <p className="text-xl font-semibold text-pink-300 mt-1">{String(appliedHour).padStart(2, "0")}:00 {appliedHour === currentHour ? "(Live)" : "(Preview)"}</p>
             </div>
             <button
-              onClick={fetchHeatmap}
+              onClick={() => setAppliedHour(selectedHour)}
               disabled={loading}
               className="w-full rounded-2xl bg-gradient-to-r from-pink-600 to-fuchsia-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-pink-500/20 transition hover:from-pink-500 hover:to-fuchsia-400 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {loading ? "Refreshing…" : "Refresh map"}
+              {loading ? "Refreshing…" : previewButtonLabel}
             </button>
           </div>
         </div>
