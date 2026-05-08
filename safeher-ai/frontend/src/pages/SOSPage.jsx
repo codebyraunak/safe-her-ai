@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Circle } from "react-leaflet";
+import { MapContainer, TileLayer, Popup, Circle } from "react-leaflet";
 import { triggerSOS, getSOSLog, getNearestStation } from "../api";
 import "leaflet/dist/leaflet.css";
 
 const DEFAULT_POS = [12.9716, 77.5946];
 
-export default function SOSPage() {
+export default function SOSPage({ userInfo, onEditProfile }) {
   const [pos,      setPos]      = useState(DEFAULT_POS);
-  const [name,     setName]     = useState("");
   const [msg,      setMsg]      = useState("");
   const [result,   setResult]   = useState(null);
   const [log,      setLog]      = useState([]);
@@ -40,12 +39,22 @@ export default function SOSPage() {
   useEffect(() => { fetchLog(); }, [result]);
 
   const handleSOS = async () => {
-    if (!name.trim()) { setError("Please enter your name."); return; }
+    if (!userInfo?.name?.trim()) {
+      setError("Please complete your profile first.");
+      return;
+    }
     setSending(true);
     setError("");
     setResult(null);
     try {
-      const data = await triggerSOS(pos[0], pos[1], name, msg);
+      const data = await triggerSOS(
+        pos[0],
+        pos[1],
+        userInfo.name,
+        msg,
+        userInfo.emergency_contact,
+        userInfo.medical_details,
+      );
       setResult(data);
     } catch {
       setError("Could not send SOS. Is the backend running?");
@@ -75,15 +84,29 @@ export default function SOSPage() {
 
           {/* Form */}
           <div className="bg-slate-800/60 rounded-xl p-5 border border-slate-700 flex flex-col gap-4">
-            <div>
-              <label className="text-xs text-slate-400 block mb-1">Your Name *</label>
-              <input
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="e.g. Priya Sharma"
-                className="w-full bg-slate-700 text-white rounded-lg px-3 py-2.5 text-sm border border-slate-600 focus:outline-none focus:border-pink-500"
-              />
-            </div>
+            {userInfo ? (
+              <div className="space-y-4">
+                <div className="rounded-xl bg-slate-900/50 p-4 border border-slate-700">
+                  <p className="text-xs uppercase tracking-wide text-slate-500">Using saved profile</p>
+                  <p className="text-sm text-white mt-3">Name: <span className="text-slate-300">{userInfo.name}</span></p>
+                  <p className="text-sm text-white">Emergency contact: <span className="text-slate-300">{userInfo.emergency_contact}</span></p>
+                  <p className="text-sm text-white">Medical details: <span className="text-slate-300">{userInfo.medical_details || "None"}</span></p>
+                </div>
+                <button
+                  type="button"
+                  onClick={onEditProfile}
+                  className="w-full py-3 rounded-xl border border-slate-600 text-slate-200 text-sm hover:bg-slate-700 transition"
+                >
+                  Edit saved profile
+                </button>
+              </div>
+            ) : (
+              <div className="rounded-xl bg-yellow-900/30 border border-yellow-500/30 p-4 text-sm text-slate-200">
+                <p className="font-semibold text-yellow-200">No saved profile found.</p>
+                <p className="mt-2">Please set up your profile on the Profile Setup page before sending an SOS.</p>
+              </div>
+            )}
+
             <div>
               <label className="text-xs text-slate-400 block mb-1">Message (optional)</label>
               <textarea
@@ -104,7 +127,7 @@ export default function SOSPage() {
 
             <button
               onClick={handleSOS}
-              disabled={sending}
+              disabled={sending || !userInfo}
               className="w-full py-4 rounded-xl bg-red-600 hover:bg-red-500 active:scale-95 text-white text-lg font-bold disabled:opacity-50 transition transform flex items-center justify-center gap-2"
             >
               {sending ? "Sending…" : "🆘  SEND SOS ALERT"}
@@ -119,6 +142,8 @@ export default function SOSPage() {
                 <p><span className="text-slate-400">Alert ID:</span> {result.alert_id}</p>
                 <p><span className="text-slate-400">Station:</span> {result.nearest_station?.name}</p>
                 <p><span className="text-slate-400">Distance:</span> {result.nearest_station?.distance_km} km</p>
+                <p><span className="text-slate-400">Emergency contact:</span> {result.emergency_contact || "N/A"}</p>
+                <p><span className="text-slate-400">Medical details:</span> {result.medical_details || "N/A"}</p>
                 <p><span className="text-slate-400">Est. Response:</span> ~{result.estimated_response_min} min</p>
                 <a
                   href={result.live_location_url}

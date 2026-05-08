@@ -41,6 +41,18 @@ def classify_density(density: float) -> str:
         return "Empty"
 
 # ── Compute brightness from density ──────────────────────────────────────────
+def simulate_street_light_status(lat: float, lng: float) -> dict:
+    # Deterministic street-light availability based on coordinates.
+    # This avoids completely random values while still creating realistic variation.
+    seed = int((round(lat * 1000) * 31 + round(lng * 1000) * 17) % 100)
+    has_street_light = seed % 10 != 0
+    is_working = has_street_light and (seed % 7 != 0)
+    return {
+        "has_street_light": has_street_light,
+        "is_working": is_working,
+    }
+
+
 def compute_brightness(density: float, is_emergency: bool = False) -> dict:
     if is_emergency:
         return {
@@ -76,10 +88,27 @@ def compute_brightness(density: float, is_emergency: bool = False) -> dict:
         "energy_saved_pct": energy_saved,
     }
 
+
 # ── Get lighting status for a zone ───────────────────────────────────────────
 def get_zone_lighting(lat: float, lng: float, hour: int = None, is_emergency: bool = False) -> dict:
     traffic = get_traffic_density(lat, lng, hour)
+    status = simulate_street_light_status(lat, lng)
     brightness = compute_brightness(traffic["density"], is_emergency)
+
+    if not status["has_street_light"]:
+        brightness = {
+            "brightness_pct": 0,
+            "mode": "No Light",
+            "mode_desc": "No street light is installed in this zone.",
+            "energy_saved_pct": 0,
+        }
+    elif not status["is_working"]:
+        brightness = {
+            "brightness_pct": 0,
+            "mode": "Broken",
+            "mode_desc": "Street light exists but is not working.",
+            "energy_saved_pct": 0,
+        }
 
     return {
         "lat": lat,
@@ -87,8 +116,10 @@ def get_zone_lighting(lat: float, lng: float, hour: int = None, is_emergency: bo
         "hour": traffic["hour"],
         "traffic_density": traffic["density"],
         "density_label": traffic["density_label"],
+        **status,
         **brightness,
     }
+
 
 # ── Generate lighting map for area ───────────────────────────────────────────
 def generate_lighting_map(center_lat: float, center_lng: float, hour: int = None) -> list:
@@ -111,23 +142,34 @@ def calculate_city_savings(num_zones: int = 100, hour: int = None) -> dict:
     if hour is None:
         hour = datetime.now().hour
 
-    total_traditional = num_zones * 100   # All lights at 100%
+    zone_breakdown = {"Working": 0, "Not Working": 0, "No Street Light": 0}
+    total_traditional = num_zones * 100   # Traditional estimate for reference
     total_smart = 0
-    zone_breakdown = {"Emergency": 0, "Full": 0, "Active": 0, "Dim": 0, "Moonlight": 0}
 
     for _ in range(num_zones):
         density = random.uniform(0, 1)
-        brightness = compute_brightness(density)
-        total_smart += brightness["brightness_pct"]
-        zone_breakdown[brightness["mode"]] = zone_breakdown.get(brightness["mode"], 0) + 1
+        lat = random.uniform(12.95, 12.99)
+        lng = random.uniform(77.58, 77.61)
+        status = simulate_street_light_status(lat, lng)
 
-    savings_pct = round((1 - total_smart / total_traditional) * 100, 1)
+        if not status["has_street_light"]:
+            zone_breakdown["No Street Light"] += 1
+        elif not status["is_working"]:
+            zone_breakdown["Not Working"] += 1
+        else:
+            zone_breakdown["Working"] += 1
+            brightness = compute_brightness(density)
+            total_smart += brightness["brightness_pct"]
+
+    wasted_energy = round(total_smart, 1)
+    savings_pct = round((1 - wasted_energy / total_traditional) * 100, 1)
 
     return {
         "total_zones": num_zones,
-        "traditional_energy_units": total_traditional,
-        "smart_energy_units": round(total_smart, 1),
+        "working_count": zone_breakdown["Working"],
+        "not_working_count": zone_breakdown["Not Working"],
+        "no_light_count": zone_breakdown["No Street Light"],
+        "status_breakdown": zone_breakdown,
         "energy_saved_pct": savings_pct,
-        "zone_breakdown": zone_breakdown,
         "hour": hour,
     }

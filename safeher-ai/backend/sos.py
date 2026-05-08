@@ -29,7 +29,7 @@ def find_nearest_station(lat: float, lng: float) -> dict:
     dist = haversine_dist(lat, lng, nearest["lat"], nearest["lng"])
     return {**nearest, "distance_km": round(dist, 2)}
 
-def trigger_sos(lat: float, lng: float, user_name: str = "Anonymous", message: str = "") -> dict:
+def trigger_sos(lat: float, lng: float, user_name: str = "Anonymous", message: str = "", emergency_contact: str = "", medical_details: str = "") -> dict:
     station = find_nearest_station(lat, lng)
     alert_id = f"SOS-{random.randint(10000, 99999)}"
     timestamp = datetime.now().isoformat()
@@ -40,6 +40,8 @@ def trigger_sos(lat: float, lng: float, user_name: str = "Anonymous", message: s
         "user": user_name,
         "location": {"lat": lat, "lng": lng},
         "message": message or "Emergency SOS triggered",
+        "emergency_contact": emergency_contact,
+        "medical_details": medical_details,
         "nearest_station": station,
         "status": "DISPATCHED",
         "estimated_response_min": round(station["distance_km"] / 0.5, 1),  # ~30km/h city speed

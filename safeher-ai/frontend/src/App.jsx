@@ -1,24 +1,43 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import HeatmapPage  from "./pages/HeatmapPage";
 import RoutePage    from "./pages/RoutePage";
 import LightingPage from "./pages/LightingPage";
 import SOSPage      from "./pages/SOSPage";
+import StartPage    from "./pages/StartPage";
+import SmartCheckPage from "./pages/SmartCheckPage";
 
 const NAV = [
-  { id: "heatmap",  label: "Safety Heatmap",    icon: "🗺️",  desc: "AI-predicted risk zones" },
-  { id: "route",    label: "Safe Route Scorer",  icon: "🛣️",  desc: "Score your route" },
-  { id: "lighting", label: "Smart Lighting",     icon: "💡",  desc: "Traffic-based brightness" },
-  { id: "sos",      label: "SOS Alert",          icon: "🆘",  desc: "Emergency dispatch" },
+  { id: "start",      label: "Profile Setup",      icon: "👤",  desc: "Save your SOS info" },
+  { id: "heatmap",    label: "Safety Heatmap",    icon: "🗺️",  desc: "AI-predicted risk zones" },
+  { id: "route",      label: "Safe Route Scorer",  icon: "🛣️",  desc: "Score your route" },
+  { id: "lighting",   label: "Smart Lighting",     icon: "💡",  desc: "Traffic-based brightness" },
+  { id: "smartcheck", label: "Smart Check",        icon: "✅",  desc: "Routine safety monitoring" },
+  { id: "sos",        label: "SOS Alert",          icon: "🆘",  desc: "Emergency dispatch" },
 ];
 
 export default function App() {
-  const [page, setPage] = useState("heatmap");
+  const [page, setPage] = useState("start");
+  const [userInfo, setUserInfo] = useState(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("safeher_user_info");
+    if (stored) {
+      try {
+        setUserInfo(JSON.parse(stored));
+        setPage("heatmap");
+      } catch {
+        localStorage.removeItem("safeher_user_info");
+      }
+    }
+  }, []);
 
   const PageComponent = {
-    heatmap:  HeatmapPage,
-    route:    RoutePage,
-    lighting: LightingPage,
-    sos:      SOSPage,
+    start:      StartPage,
+    heatmap:    HeatmapPage,
+    route:      RoutePage,
+    lighting:   LightingPage,
+    smartcheck: SmartCheckPage,
+    sos:        SOSPage,
   }[page];
 
   return (
@@ -61,7 +80,12 @@ export default function App() {
 
       {/* Main content */}
       <main className="flex-1 overflow-y-auto p-6">
-        <PageComponent />
+        <PageComponent
+          userInfo={userInfo}
+          setUserInfo={setUserInfo}
+          onComplete={() => setPage("heatmap")}
+          onEditProfile={() => setPage("start")}
+        />
       </main>
     </div>
   );

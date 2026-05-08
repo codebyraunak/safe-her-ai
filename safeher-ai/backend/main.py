@@ -59,6 +59,8 @@ class SOSRequest(BaseModel):
     lng: float
     user_name: Optional[str] = "Anonymous"
     message: Optional[str] = ""
+    emergency_contact: Optional[str] = None
+    medical_details: Optional[str] = None
 
 @app.get("/")
 def root():
@@ -109,7 +111,14 @@ def lighting_savings(num_zones: int = 100):
 
 @app.post("/api/sos/trigger")
 def sos_trigger(req: SOSRequest):
-    alert = trigger_sos(req.lat, req.lng, req.user_name or "Anonymous", req.message or "")
+    alert = trigger_sos(
+        req.lat,
+        req.lng,
+        req.user_name or "Anonymous",
+        req.message or "",
+        req.emergency_contact or "",
+        req.medical_details or "",
+    )
     return alert
 
 @app.get("/api/sos/log")

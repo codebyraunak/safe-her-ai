@@ -5,19 +5,16 @@ import "leaflet/dist/leaflet.css";
 
 const DEFAULT_CENTER = [12.9716, 77.5946];
 
-const MODE_COLORS = {
-  Moonlight:  "#1e3a5f",
-  Dim:        "#3b82f6",
-  Active:     "#f59e0b",
-  Full:       "#fde047",
-  Emergency:  "#ef4444",
+const STATUS_COLORS = {
+  Working:        "#22c55e",
+  "Not Working": "#ef4444",
+  "No Street Light": "#6b7280",
 };
 
-const MODE_BRIGHTNESS_COLOR = (pct) => {
-  if (pct >= 100) return "#fde047";
-  if (pct >= 70)  return "#f59e0b";
-  if (pct >= 40)  return "#3b82f6";
-  return               "#1e3a5f";
+const getStatusColor = (zone) => {
+  if (!zone.has_street_light) return STATUS_COLORS["No Street Light"];
+  if (!zone.is_working) return STATUS_COLORS["Not Working"];
+  return STATUS_COLORS.Working;
 };
 
 export default function LightingPage() {
@@ -46,16 +43,12 @@ export default function LightingPage() {
 
   useEffect(() => { fetchData(); }, []);
 
-  const avgBrightness = zones.length
-    ? Math.round(zones.reduce((s, z) => s + z.brightness_pct, 0) / zones.length)
-    : 0;
-
   return (
     <div className="flex flex-col gap-4 h-full">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">Smart Street Lighting</h1>
-          <p className="text-sm text-slate-400">Traffic-density-based brightness control — saving energy intelligently</p>
+          <p className="text-sm text-slate-400">Street light operational status — showing working, broken, and missing lights.</p>
         </div>
         <div className="flex items-center gap-3">
           <label className="text-sm text-slate-400">Hour:</label>
@@ -79,23 +72,23 @@ export default function LightingPage() {
         <div className="px-4 py-3 rounded-lg bg-red-900/40 border border-red-500/40 text-red-300 text-sm">{error}</div>
       )}
 
-      {/* Mode legend */}
+      {/* Status legend */}
       <div className="flex gap-3 flex-wrap">
-        {Object.entries(MODE_COLORS).map(([mode, color]) => (
-          <div key={mode} className="flex items-center gap-1.5">
+        {Object.entries(STATUS_COLORS).map(([status, color]) => (
+          <div key={status} className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
-            <span className="text-xs text-slate-400">{mode}</span>
+            <span className="text-xs text-slate-400">{status}</span>
           </div>
         ))}
       </div>
 
-      {/* Stats row */}
+      {/* Street light status cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "Avg Brightness", value: `${avgBrightness}%`,               color: "text-amber-400" },
-          { label: "Energy Saved",   value: savings ? `${savings.energy_saved_pct}%` : "—", color: "text-green-400" },
-          { label: "Full Zones",     value: savings?.zone_breakdown?.Full ?? "—",  color: "text-yellow-300" },
-          { label: "Moonlight Zones",value: savings?.zone_breakdown?.Moonlight ?? "—", color: "text-blue-400" },
+          { label: "Working Lights",     value: savings?.working_count ?? "—",      color: "text-emerald-400" },
+          { label: "Broken Lights",      value: savings?.not_working_count ?? "—",  color: "text-red-400" },
+          { label: "No Street Lights",   value: savings?.no_light_count ?? "—",   color: "text-slate-400" },
+          { label: "Total Zones",        value: savings?.total_zones ?? "—",       color: "text-white" },
         ].map(s => (
           <div key={s.label} className="bg-slate-800/60 rounded-xl p-4 border border-slate-700">
             <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
@@ -115,20 +108,20 @@ export default function LightingPage() {
             <Circle
               key={i}
               center={[z.lat, z.lng]}
-              radius={200}
+              radius={180}
               pathOptions={{
-                color: MODE_BRIGHTNESS_COLOR(z.brightness_pct),
-                fillColor: MODE_BRIGHTNESS_COLOR(z.brightness_pct),
-                fillOpacity: Math.max(0.15, z.brightness_pct / 120),
+                color: getStatusColor(z),
+                fillColor: getStatusColor(z),
+                fillOpacity: 0.35,
                 weight: 0,
               }}
             >
               <Popup>
                 <div className="text-sm">
-                  <strong>Mode:</strong> {z.mode}<br />
+                  <strong>Street Light:</strong> {z.has_street_light ? "Yes" : "No"}<br />
+                  <strong>Status:</strong> {z.has_street_light ? (z.is_working ? "Working" : "Broken") : "No Street Light"}<br />
                   <strong>Brightness:</strong> {z.brightness_pct}%<br />
                   <strong>Traffic:</strong> {z.density_label} ({(z.traffic_density * 100).toFixed(0)}%)<br />
-                  <strong>Energy Saved:</strong> {z.energy_saved_pct}%<br />
                   <em className="text-xs">{z.mode_desc}</em>
                 </div>
               </Popup>
@@ -140,21 +133,17 @@ export default function LightingPage() {
       {/* Saving breakdown */}
       {savings && (
         <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700">
-          <p className="text-sm font-semibold text-white mb-3">City-wide Energy Breakdown ({savings.total_zones} zones)</p>
+          <p className="text-sm font-semibold text-white mb-3">City-wide Street Light Status ({savings.total_zones} zones)</p>
           <div className="flex gap-4 flex-wrap">
-            {Object.entries(savings.zone_breakdown).map(([mode, count]) => (
-              <div key={mode} className="text-center">
+            {Object.entries(savings.status_breakdown).map(([status, count]) => (
+              <div key={status} className="text-center">
                 <div className="w-8 h-8 rounded-full mx-auto mb-1 flex items-center justify-center text-xs font-bold text-black"
-                  style={{ backgroundColor: MODE_COLORS[mode] }}>
+                  style={{ backgroundColor: STATUS_COLORS[status] }}>
                   {count}
                 </div>
-                <p className="text-xs text-slate-400">{mode}</p>
+                <p className="text-xs text-slate-400">{status}</p>
               </div>
             ))}
-            <div className="ml-auto text-right">
-              <p className="text-2xl font-bold text-green-400">{savings.energy_saved_pct}%</p>
-              <p className="text-xs text-slate-400">Total Energy Saved</p>
-            </div>
           </div>
         </div>
       )}
