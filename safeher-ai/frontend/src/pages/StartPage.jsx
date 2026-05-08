@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { registerUser } from "../api";
 
 export default function StartPage({ userInfo, setUserInfo, onComplete }) {
   const [name, setName] = useState("");
@@ -6,6 +7,16 @@ export default function StartPage({ userInfo, setUserInfo, onComplete }) {
   const [medical, setMedical] = useState("");
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [position, setPosition] = useState(null);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setPosition([pos.coords.latitude, pos.coords.longitude]),
+        () => {},
+      );
+    }
+  }, []);
 
   useEffect(() => {
     if (userInfo) {
@@ -16,7 +27,7 @@ export default function StartPage({ userInfo, setUserInfo, onComplete }) {
     }
   }, [userInfo]);
 
-  const saveProfile = () => {
+  const saveProfile = async () => {
     if (!name.trim()) {
       setError("Please enter your full name.");
       return;
@@ -26,7 +37,9 @@ export default function StartPage({ userInfo, setUserInfo, onComplete }) {
       return;
     }
 
+    const user_id = userInfo?.user_id || crypto.randomUUID();
     const profile = {
+      user_id,
       name: name.trim(),
       emergency_contact: contact.trim(),
       medical_details: medical.trim(),
@@ -36,6 +49,22 @@ export default function StartPage({ userInfo, setUserInfo, onComplete }) {
     setUserInfo(profile);
     setError("");
     setSaved(true);
+
+    if (position) {
+      try {
+        await registerUser(
+          profile.user_id,
+          profile.name,
+          profile.emergency_contact,
+          profile.medical_details,
+          position[0],
+          position[1],
+        );
+      } catch {
+        // ignore registration failures for now
+      }
+    }
+
     if (onComplete) onComplete();
   };
 

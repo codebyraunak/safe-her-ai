@@ -5,6 +5,7 @@ import LightingPage from "./pages/LightingPage";
 import SOSPage      from "./pages/SOSPage";
 import StartPage    from "./pages/StartPage";
 import SmartCheckPage from "./pages/SmartCheckPage";
+import { registerUser } from "./api";
 
 const NAV = [
   { id: "start",      label: "Profile Setup",      icon: "👤",  desc: "Save your SOS info" },
@@ -18,18 +19,46 @@ const NAV = [
 export default function App() {
   const [page, setPage] = useState("start");
   const [userInfo, setUserInfo] = useState(null);
+  const [currentPos, setCurrentPos] = useState(null);
 
   useEffect(() => {
     const stored = localStorage.getItem("safeher_user_info");
     if (stored) {
       try {
-        setUserInfo(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        if (!parsed.user_id) {
+          parsed.user_id = crypto.randomUUID();
+          localStorage.setItem("safeher_user_info", JSON.stringify(parsed));
+        }
+        setUserInfo(parsed);
         setPage("heatmap");
       } catch {
         localStorage.removeItem("safeher_user_info");
       }
     }
   }, []);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setCurrentPos([pos.coords.latitude, pos.coords.longitude]),
+        () => {},
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    if (userInfo && currentPos) {
+      registerUser(
+        userInfo.user_id,
+        userInfo.name,
+        userInfo.emergency_contact,
+        userInfo.medical_details,
+        currentPos[0],
+        currentPos[1],
+      ).catch(() => {});
+    }
+  }, [userInfo, currentPos]);
 
   const PageComponent = {
     start:      StartPage,

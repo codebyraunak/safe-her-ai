@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
-import { MapContainer, TileLayer, Circle, Popup, Marker } from "react-leaflet";
-import { getHeatmap, getHotspots } from "../api";
+import { MapContainer, TileLayer, Circle, Popup } from "react-leaflet";
+import { getHeatmap, getHotspots, getNearestHelper } from "../api";
 import "leaflet/dist/leaflet.css";
 
 const RISK_COLORS = {
@@ -16,12 +16,15 @@ const RISK_OPACITY = { 1: 0.25, 2: 0.3, 3: 0.4, 4: 0.5, 5: 0.6 };
 // Bengaluru center
 const DEFAULT_CENTER = [12.9716, 77.5946];
 
-export default function HeatmapPage() {
+export default function HeatmapPage({ userInfo }) {
   const [points,   setPoints]   = useState([]);
   const [hotspots, setHotspots] = useState([]);
   const [hour,     setHour]     = useState(new Date().getHours());
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState("");
+  const [currentPos, setCurrentPos] = useState(null);
+  const [nearestHelper, setNearestHelper] = useState(null);
+  const [homeSaved, setHomeSaved] = useState(false);
 
   const fetchHeatmap = useCallback(async () => {
     setLoading(true);
@@ -41,6 +44,26 @@ export default function HeatmapPage() {
   }, [hour]);
 
   useEffect(() => { fetchHeatmap(); }, [fetchHeatmap]);
+
+  useEffect(() => {
+    setHomeSaved(Boolean(localStorage.getItem("safeher_home_location")));
+  }, []);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setCurrentPos([pos.coords.latitude, pos.coords.longitude]),
+        () => {},
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!currentPos) return;
+    getNearestHelper(currentPos[0], currentPos[1], userInfo?.user_id)
+      .then((data) => setNearestHelper(data.nearest_helper || null))
+      .catch(() => setNearestHelper(null));
+  }, [currentPos, userInfo]);
 
   return (
     <div className="flex flex-col h-full gap-4">
@@ -137,17 +160,28 @@ export default function HeatmapPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: "Total Zones", value: points.length, color: "text-pink-400" },
           { label: "High Risk Zones", value: points.filter(p => p.risk >= 4).length, color: "text-red-400" },
           { label: "DBSCAN Hotspots", value: hotspots.length, color: "text-amber-400" },
+          { label: "Smart Check", value: homeSaved ? "Ready" : "Setup required", color: homeSaved ? "text-emerald-400" : "text-slate-400" },
         ].map(s => (
           <div key={s.label} className="bg-slate-800/60 rounded-xl p-4 border border-slate-700">
             <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
             <p className="text-xs text-slate-400 mt-1">{s.label}</p>
           </div>
         ))}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700">
+          <p className="text-xs text-slate-400">Nearest helper</p>
+          <p className="text-2xl font-bold text-white mt-2">
+            {nearestHelper ? `${nearestHelper.name} (${nearestHelper.distance_km} km)` : "No helper nearby"}
+          </p>
+          <p className="text-xs text-slate-500 mt-2">This app will try to route your emergency to the closest other user available.</p>
+        </div>
       </div>
     </div>
   );

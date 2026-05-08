@@ -120,6 +120,7 @@ export default function SmartCheckPage({ userInfo, onEditProfile }) {
       const data = await triggerSOS(
         currentPos[0],
         currentPos[1],
+        userInfo.user_id,
         userInfo.name,
         "Smart Check failed: user did not confirm safe.",
         userInfo.emergency_contact,

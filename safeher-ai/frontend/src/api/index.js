@@ -25,8 +25,14 @@ export const getLightingMap = (center_lat, center_lng, hour) =>
 export const getLightingSavings = (num_zones = 100) =>
   api(`/api/lighting/savings?num_zones=${num_zones}`);
 
-export const triggerSOS = (lat, lng, user_name, message, emergency_contact, medical_details) =>
-  api("/api/sos/trigger", "POST", { lat, lng, user_name, message, emergency_contact, medical_details });
+export const registerUser = (user_id, name, emergency_contact, medical_details, lat, lng) =>
+  api("/api/users/register", "POST", { user_id, name, emergency_contact, medical_details, lat, lng });
+
+export const getNearestHelper = (lat, lng, exclude_user_id) =>
+  api(`/api/users/nearest-helper?lat=${lat}&lng=${lng}${exclude_user_id ? `&exclude_user_id=${exclude_user_id}` : ""}`);
+
+export const triggerSOS = (lat, lng, user_id, user_name, message, emergency_contact, medical_details) =>
+  api("/api/sos/trigger", "POST", { lat, lng, user_id, user_name, message, emergency_contact, medical_details });
 
 export const getSOSLog = () => api("/api/sos/log");
 

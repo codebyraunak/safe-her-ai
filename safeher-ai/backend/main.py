@@ -16,6 +16,7 @@ from lighting import (
     calculate_city_savings,
 )
 from sos import trigger_sos, get_sos_log, find_nearest_station
+from users import register_user, find_nearest_user
 
 app = FastAPI(title="SafeHer AI API", version="1.0.0")
 
@@ -57,10 +58,19 @@ class LightingRequest(BaseModel):
 class SOSRequest(BaseModel):
     lat: float
     lng: float
+    user_id: Optional[str] = None
     user_name: Optional[str] = "Anonymous"
     message: Optional[str] = ""
     emergency_contact: Optional[str] = None
     medical_details: Optional[str] = None
+
+class UserRegisterRequest(BaseModel):
+    user_id: str
+    name: str
+    emergency_contact: str
+    medical_details: str
+    lat: float
+    lng: float
 
 @app.get("/")
 def root():
@@ -109,6 +119,17 @@ def lighting_map(req: HeatmapRequest):
 def lighting_savings(num_zones: int = 100):
     return calculate_city_savings(num_zones)
 
+@app.post("/api/users/register")
+def user_register(req: UserRegisterRequest):
+    user = register_user(req.user_id, req.name, req.emergency_contact, req.medical_details, req.lat, req.lng)
+    helper = find_nearest_user(req.lat, req.lng, exclude_user_id=req.user_id)
+    return {"user": user, "nearest_helper": helper}
+
+@app.get("/api/users/nearest-helper")
+def nearest_helper(lat: float, lng: float, exclude_user_id: Optional[str] = None):
+    helper = find_nearest_user(lat, lng, exclude_user_id)
+    return {"nearest_helper": helper}
+
 @app.post("/api/sos/trigger")
 def sos_trigger(req: SOSRequest):
     alert = trigger_sos(
@@ -119,6 +140,9 @@ def sos_trigger(req: SOSRequest):
         req.emergency_contact or "",
         req.medical_details or "",
     )
+    helper = find_nearest_user(req.lat, req.lng, exclude_user_id=req.user_id)
+    if helper:
+        alert["nearest_helper"] = helper
     return alert
 
 @app.get("/api/sos/log")

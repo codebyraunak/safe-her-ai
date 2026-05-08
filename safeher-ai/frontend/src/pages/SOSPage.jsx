@@ -50,6 +50,7 @@ export default function SOSPage({ userInfo, onEditProfile }) {
       const data = await triggerSOS(
         pos[0],
         pos[1],
+        userInfo.user_id,
         userInfo.name,
         msg,
         userInfo.emergency_contact,
@@ -144,6 +145,9 @@ export default function SOSPage({ userInfo, onEditProfile }) {
                 <p><span className="text-slate-400">Distance:</span> {result.nearest_station?.distance_km} km</p>
                 <p><span className="text-slate-400">Emergency contact:</span> {result.emergency_contact || "N/A"}</p>
                 <p><span className="text-slate-400">Medical details:</span> {result.medical_details || "N/A"}</p>
+                {result.nearest_helper && (
+                  <p><span className="text-slate-400">Nearest helper:</span> {result.nearest_helper.name} ({result.nearest_helper.distance_km} km)</p>
+                )}
                 <p><span className="text-slate-400">Est. Response:</span> ~{result.estimated_response_min} min</p>
                 <a
                   href={result.live_location_url}
