@@ -20,6 +20,7 @@ export default function HeatmapPage({ userInfo }) {
   const [points,   setPoints]   = useState([]);
   const [hotspots, setHotspots] = useState([]);
   const [hour,     setHour]     = useState(new Date().getHours());
+  const [currentTime, setCurrentTime] = useState(new Date());
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState("");
   const [currentPos, setCurrentPos] = useState(null);
@@ -50,6 +51,11 @@ export default function HeatmapPage({ userInfo }) {
   }, []);
 
   useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => setCurrentPos([pos.coords.latitude, pos.coords.longitude]),
@@ -68,28 +74,66 @@ export default function HeatmapPage({ userInfo }) {
   return (
     <div className="flex flex-col h-full gap-4">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="flex flex-col gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Safety Heatmap</h1>
           <p className="text-sm text-slate-400">AI-predicted risk zones for women — updated in real time</p>
         </div>
-       <div className="flex items-center gap-3">
-         <label className="text-sm text-slate-400">Time of day:</label>
-      <input
-       type="range" min={0} max={23} value={hour}
-      onChange={e => setHour(Number(e.target.value))}
-       className="w-32 accent-pink-500"
-        />
-  <span className="text-white font-mono text-sm w-14">
-    {String(hour).padStart(2, "0")}:00
-  </span>
-          <button
-            onClick={fetchHeatmap}
-            disabled={loading}
-            className="px-4 py-2 rounded-lg bg-pink-600 hover:bg-pink-500 text-white text-sm font-medium disabled:opacity-50 transition"
-          >
-            {loading ? "Loading…" : "Refresh"}
-          </button>
+
+        <div className="grid gap-4 md:grid-cols-[1.4fr_0.9fr] items-center rounded-3xl border border-slate-700/80 bg-slate-900/70 p-4 shadow-xl shadow-slate-950/30">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm text-slate-400 uppercase tracking-[0.18em]">Time of day</p>
+                <p className="text-lg font-semibold text-white">Choose a risk window</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="rounded-full bg-slate-800 px-3 py-2 text-sm font-semibold text-white border border-slate-700">
+                  {String(hour).padStart(2, "0")}:00
+                </div>
+                <div className="rounded-full bg-slate-800/80 px-3 py-2 text-sm text-slate-300 border border-slate-700">
+                  Current time: {currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs text-slate-500">
+                <span>Early</span>
+                <span>Late</span>
+              </div>
+              <div className="relative flex items-center gap-3">
+                <input
+                  type="range"
+                  min={0}
+                  max={23}
+                  value={hour}
+                  onChange={(e) => setHour(Number(e.target.value))}
+                  className="h-2 w-full appearance-none rounded-full bg-white/10 accent-pink-500 outline-none transition duration-200 hover:bg-white/20"
+                />
+                <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 pointer-events-none bg-gradient-to-r from-pink-500/20 via-transparent to-slate-400/10 rounded-full h-2" />
+              </div>
+              <p className="text-xs text-slate-500">Slide to preview risk levels at different hours of the day.</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col justify-center gap-3 rounded-3xl border border-slate-700/80 bg-slate-950/60 p-4">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-sm text-slate-400">Current risk window</span>
+              <span className="rounded-full bg-pink-500/15 px-3 py-1 text-sm font-semibold text-pink-300">{hour < 6 ? "Night" : hour < 12 ? "Morning" : hour < 18 ? "Afternoon" : "Evening"}</span>
+            </div>
+            <div className="rounded-3xl bg-slate-900/80 p-4 border border-slate-700 text-center">
+              <p className="text-xs text-slate-400 uppercase tracking-[0.16em]">Selected hour</p>
+              <p className="text-3xl font-bold text-white mt-2">{String(hour).padStart(2, "0")}:00</p>
+            </div>
+            <button
+              onClick={fetchHeatmap}
+              disabled={loading}
+              className="w-full rounded-2xl bg-gradient-to-r from-pink-600 to-fuchsia-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-pink-500/20 transition hover:from-pink-500 hover:to-fuchsia-400 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading ? "Refreshing…" : "Refresh map"}
+            </button>
+          </div>
         </div>
       </div>
 

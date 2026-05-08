@@ -21,6 +21,7 @@ export default function LightingPage() {
   const [zones,    setZones]    = useState([]);
   const [savings,  setSavings]  = useState(null);
   const [hour,     setHour]     = useState(new Date().getHours());
+  const [currentTime, setCurrentTime] = useState(new Date());
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState("");
 
@@ -43,6 +44,11 @@ export default function LightingPage() {
 
   useEffect(() => { fetchData(); }, []);
 
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <div className="flex flex-col gap-4 h-full">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -50,21 +56,51 @@ export default function LightingPage() {
           <h1 className="text-2xl font-bold text-white">Smart Street Lighting</h1>
           <p className="text-sm text-slate-400">Street light operational status — showing working, broken, and missing lights.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <label className="text-sm text-slate-400">Hour:</label>
-          <input
-            type="range" min={0} max={23} value={hour}
-            onChange={e => setHour(Number(e.target.value))}
-            className="w-28 accent-amber-400"
-          />
-          <span className="text-white font-mono text-sm w-14">{String(hour).padStart(2,"0")}:00</span>
-          <button
-            onClick={fetchData}
-            disabled={loading}
-            className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-semibold text-sm disabled:opacity-50 transition"
-          >
-            {loading ? "Loading…" : "Refresh"}
-          </button>
+        <div className="grid gap-4 md:grid-cols-[1.6fr_0.9fr] items-center rounded-3xl border border-slate-700/80 bg-slate-900/70 p-4 shadow-xl shadow-slate-950/20">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm text-slate-400 uppercase tracking-[0.18em]">Street lighting time</p>
+                <p className="text-lg font-semibold text-white">Simulate how the city looks at different hours</p>
+              </div>
+              <div className="rounded-full bg-slate-800 px-3 py-2 text-sm font-semibold text-black border border-slate-700 text-white">
+                Now: {currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs text-slate-500">
+                <span>Early</span>
+                <span>Late</span>
+              </div>
+              <div className="relative flex items-center gap-3">
+                <input
+                  type="range"
+                  min={0}
+                  max={23}
+                  value={hour}
+                  onChange={e => setHour(Number(e.target.value))}
+                  className="h-2 w-full appearance-none rounded-full bg-white/10 accent-amber-400 outline-none transition duration-200 hover:bg-white/20"
+                />
+                <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 pointer-events-none bg-gradient-to-r from-amber-400/20 via-transparent to-slate-400/10 rounded-full h-2" />
+              </div>
+              <p className="text-xs text-slate-500">Adjust the view to see how street light coverage changes through the day.</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col justify-center gap-3 rounded-3xl border border-slate-700/80 bg-slate-950/60 p-4">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-sm text-slate-400">Selected hour</span>
+              <span className="rounded-full bg-amber-400/15 px-3 py-1 text-sm font-semibold text-amber-200">{String(hour).padStart(2, "0")}:00</span>
+            </div>
+            <button
+              onClick={fetchData}
+              disabled={loading}
+              className="w-full rounded-2xl bg-gradient-to-r from-amber-500 to-orange-400 px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-amber-500/20 transition hover:from-amber-400 hover:to-orange-300 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading ? "Refreshing…" : "Refresh map"}
+            </button>
+          </div>
         </div>
       </div>
 

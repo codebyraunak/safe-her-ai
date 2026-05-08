@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Polyline, CircleMarker, Popup, useMap } from "react-leaflet";
 import { scoreRoute, findSafeRoute } from "../api";
 import "leaflet/dist/leaflet.css";
@@ -41,6 +41,7 @@ export default function RoutePage() {
   const [startIdx, setStartIdx] = useState(0);
   const [endIdx, setEndIdx] = useState(1);
   const [hour, setHour] = useState(new Date().getHours());
+  const [currentTime, setCurrentTime] = useState(new Date());
   const [routes, setRoutes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -99,6 +100,11 @@ export default function RoutePage() {
     }
   };
 
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
+
   const safest = routes.find(r => r.is_safest) || routes[0];
 
   return (
@@ -135,15 +141,37 @@ export default function RoutePage() {
           </select>
         </div>
 
-        <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700">
-          <label className="text-xs text-slate-400 block mb-2">
-            🕐 Time: <span className="text-white font-mono">{String(hour).padStart(2, "0")}:00</span>
-          </label>
-          <input
-            type="range" min={0} max={23} value={hour}
-            onChange={e => setHour(Number(e.target.value))}
-            className="w-full accent-pink-500"
-          />
+        <div className="bg-slate-800/60 rounded-3xl p-4 border border-slate-700/90">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div>
+              <p className="text-xs text-slate-400 uppercase tracking-[0.16em]">Departure time</p>
+              <p className="text-sm text-white">Plan for the safest hour</p>
+            </div>
+            <span className="rounded-full bg-pink-500/15 px-3 py-1 text-sm font-semibold text-pink-200">Now: {currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+          </div>
+          <div className="space-y-3">
+            <div className="rounded-3xl bg-slate-950/70 border border-slate-700 p-4 text-center">
+              <p className="text-xs text-slate-500 uppercase tracking-[0.14em]">Selected hour</p>
+              <p className="text-2xl font-bold text-white mt-2">{String(hour).padStart(2, "0")}:00</p>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs text-slate-500">
+                <span>Earlier</span>
+                <span>Latter</span>
+              </div>
+              <div className="relative">
+                <input
+                  type="range"
+                  min={0}
+                  max={23}
+                  value={hour}
+                  onChange={e => setHour(Number(e.target.value))}
+                  className="h-2 w-full appearance-none rounded-full bg-white/10 accent-pink-500 outline-none transition duration-200 hover:bg-white/20"
+                />
+                <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 pointer-events-none bg-gradient-to-r from-pink-500/15 via-transparent to-slate-400/10 rounded-full h-2" />
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700 flex items-end">
