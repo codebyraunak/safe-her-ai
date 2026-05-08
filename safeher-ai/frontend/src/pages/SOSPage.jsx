@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Popup, Circle } from "react-leaflet";
-import { triggerSOS, getSOSLog, getNearestStation } from "../api";
+import { triggerSOS, getSOSLog, getNearestStation, getNearestHelper } from "../api";
 import "leaflet/dist/leaflet.css";
 
 const DEFAULT_POS = [12.9716, 77.5946];
@@ -13,6 +13,7 @@ export default function SOSPage({ userInfo, onEditProfile }) {
   const [station,  setStation]  = useState(null);
   const [sending,  setSending]  = useState(false);
   const [error,    setError]    = useState("");
+  const [helpers,  setHelpers]  = useState([]);
 
   // Try to get real location
   useEffect(() => {
@@ -30,6 +31,13 @@ export default function SOSPage({ userInfo, onEditProfile }) {
       .then(setStation)
       .catch(() => {});
   }, [pos]);
+
+  // Load nearest helpers
+  useEffect(() => {
+    getNearestHelper(pos[0], pos[1], userInfo?.user_id)
+      .then((data) => setHelpers(data.nearest_helper ? [data.nearest_helper] : []))
+      .catch(() => setHelpers([]));
+  }, [pos, userInfo]);
 
   // Load SOS log
   const fetchLog = async () => {
@@ -80,6 +88,21 @@ export default function SOSPage({ userInfo, onEditProfile }) {
               <p className="text-xs text-blue-400 font-semibold mb-1">NEAREST POLICE STATION</p>
               <p className="text-white font-semibold">{station.name}</p>
               <p className="text-slate-400 text-sm">{station.distance_km} km away · {station.contact}</p>
+            </div>
+          )}
+
+          {/* Nearby helpers */}
+          {helpers.length > 0 && (
+            <div className="bg-green-900/30 border border-green-500/40 rounded-xl p-4">
+              <p className="text-xs text-green-400 font-semibold mb-1">NEARBY HELPERS ({helpers.length})</p>
+              {helpers.map((helper, i) => (
+                <div key={i} className="text-white text-sm">
+                  <p className="font-semibold">{helper.name}</p>
+                  <p className="text-slate-400">{helper.distance_km} km away</p>
+                  <p className="text-slate-400">Contact: {helper.emergency_contact}</p>
+                </div>
+              ))}
+              <p className="text-xs text-slate-400 mt-2">These users will be notified in emergencies.</p>
             </div>
           )}
 
