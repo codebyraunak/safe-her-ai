@@ -17,9 +17,11 @@ def get_safe_spots(lat: float, lng: float, radius: int = 2000):
     );
     out body;
     """
-    
+    headers = {
+        "User-Agent": "SafeHerAI/1.0 (https://github.com/codebyraunak/safe-her-ai)"
+    }
     try:
-        response = requests.post(overpass_url, data={"data": overpass_query}, timeout=10)
+        response = requests.post(overpass_url, data={"data": overpass_query}, headers=headers, timeout=10)
         response.raise_for_status()
         data = response.json()
         
