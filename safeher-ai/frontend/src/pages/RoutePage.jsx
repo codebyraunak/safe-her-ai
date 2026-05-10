@@ -66,8 +66,21 @@ export default function RoutePage() {
       );
       if (data.routes?.length === 0) throw new Error("No routes found");
 
-      // Keep all routes returned by OpenRouteService (they are structurally different)
-      const unique = data.routes || [];
+      // Filter out practically identical routes using a midpoint heuristic
+      const areRoutesSimilar = (r1, r2) => {
+        if (!r1.coordinates.length || !r2.coordinates.length) return false;
+        const mid1 = r1.coordinates[Math.floor(r1.coordinates.length / 2)];
+        const mid2 = r2.coordinates[Math.floor(r2.coordinates.length / 2)];
+        const dist = Math.sqrt(Math.pow(mid1[0] - mid2[0], 2) + Math.pow(mid1[1] - mid2[1], 2));
+        return dist < 0.005; // Requires ~500m separation at the midpoint
+      };
+
+      const unique = [];
+      for (const r of data.routes || []) {
+        if (!unique.some(existing => areRoutesSimilar(existing, r))) {
+          unique.push(r);
+        }
+      }
 
       setRoutes(unique);
       setSelectedRoute(0);

@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Circle, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Circle, Popup, useMap } from "react-leaflet";
+
+function RecenterMap({ center }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, map.getZoom());
+  }, [center, map]);
+  return null;
+}
 import { getLightingMap, getLightingSavings } from "../api";
 import "leaflet/dist/leaflet.css";
 
@@ -149,6 +157,7 @@ export default function LightingPage() {
       {/* Map */}
       <div className="flex-1 rounded-2xl overflow-hidden border border-slate-700 min-h-[380px]">
         <MapContainer center={center} zoom={14} style={{ height: "100%", width: "100%" }}>
+          <RecenterMap center={center} />
           <TileLayer
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             attribution='&copy; OpenStreetMap &copy; CartoDB'
