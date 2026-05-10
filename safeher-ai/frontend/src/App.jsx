@@ -8,6 +8,7 @@ import SmartCheckPage from "./pages/SmartCheckPage";
 import FakeCallPage from "./pages/FakeCallPage";
 import SafeWalkPage from "./pages/SafeWalkPage";
 import { registerUser } from "./api";
+import { useSafetyMonitor } from "./hooks/useSafetyMonitor";
 
 const NAV = [
   { id: "start",      label: "Profile Setup",      icon: "👤",  desc: "Save your SOS info" },
@@ -24,6 +25,8 @@ export default function App() {
   const [page, setPage] = useState("start");
   const [userInfo, setUserInfo] = useState(null);
   const [currentPos, setCurrentPos] = useState(null);
+  
+  const monitor = useSafetyMonitor(userInfo, currentPos);
 
   useEffect(() => {
     const stored = localStorage.getItem("safeher_user_info");
@@ -120,6 +123,7 @@ export default function App() {
           setUserInfo={setUserInfo}
           onComplete={() => setPage("heatmap")}
           onEditProfile={() => setPage("start")}
+          monitor={monitor}
         />
       </main>
     </div>

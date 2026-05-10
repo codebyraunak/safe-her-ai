@@ -22,17 +22,13 @@ function formatTime(seconds) {
   return `${mins}:${secs}`;
 }
 
-export default function SmartCheckPage({ userInfo, onEditProfile }) {
+export default function SmartCheckPage({ userInfo, onEditProfile, monitor }) {
+  const { sc, globalConfirmSafe } = monitor || {};
   const [currentPos, setCurrentPos] = useState(DEFAULT_POS);
   const [homePos, setHomePos] = useState(null);
-  const [countdown, setCountdown] = useState(CHECK_SECONDS);
-  const [status, setStatus] = useState("idle");
-  const [message, setMessage] = useState("");
-  const [result, setResult] = useState(null);
-  const [timerMinutes, setTimerMinutes] = useState(15);
   const [editingHome, setEditingHome] = useState(false);
-  const intervalRef = useRef(null);
-  const timeoutRef = useRef(null);
+
+  if (!monitor) return null;
 
   useEffect(() => {
     const stored = localStorage.getItem("safeher_home_location");
@@ -55,92 +51,53 @@ export default function SmartCheckPage({ userInfo, onEditProfile }) {
   }, []);
 
   useEffect(() => {
-    return () => {
-      clearInterval(intervalRef.current);
-      clearTimeout(timeoutRef.current);
-    };
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (p) => setCurrentPos([p.coords.latitude, p.coords.longitude]),
+        () => {},
+      );
+    }
   }, []);
 
   const saveHomeLocation = () => {
     localStorage.setItem("safeher_home_location", JSON.stringify(currentPos));
     setHomePos(currentPos);
     setEditingHome(false);
-    setMessage("Home location saved. You can now start smart monitoring.");
+    sc.setMessage("Home location saved. You can now start smart monitoring.");
   };
 
   const clearHomeLocation = () => {
     localStorage.removeItem("safeher_home_location");
     setHomePos(null);
     setEditingHome(false);
-    setMessage("Home location cleared.");
-  };
-
-  const clearMonitoring = () => {
-    clearInterval(intervalRef.current);
-    clearTimeout(timeoutRef.current);
-    intervalRef.current = null;
-    timeoutRef.current = null;
+    sc.setMessage("Home location cleared.");
   };
 
   const stopMonitoring = () => {
-    clearMonitoring();
-    setStatus("idle");
-    setCountdown(timerMinutes * 60);
+    sc.setStatus("idle");
+    sc.setCountdown(sc.timerMinutes * 60);
   };
 
   const startMonitoring = () => {
     if (!userInfo?.name || !userInfo?.emergency_contact) {
-      setMessage("Please complete your profile first for Smart Check.");
+      sc.setMessage("Please complete your profile first for Smart Check.");
       return;
     }
     if (!homePos) {
-      setMessage("Please save your home location before starting Smart Check.");
+      sc.setMessage("Please save your home location before starting Smart Check.");
       return;
     }
 
-    const timerSeconds = timerMinutes * 60;
-    setStatus("pending");
-    setMessage("Smart Check is active. Tap SAFE if you are okay before the timer expires.");
-    setResult(null);
-    setCountdown(timerSeconds);
-
-    intervalRef.current = setInterval(() => {
-      setCountdown((prev) => Math.max(prev - 1, 0));
-    }, 1000);
-
-    timeoutRef.current = setTimeout(() => {
-      triggerAlarm();
-    }, timerSeconds * 1000);
+    const timerSeconds = sc.timerMinutes * 60;
+    sc.setStatus("pending");
+    sc.setMessage("Smart Check is active. Tap SAFE if you are okay before the timer expires.");
+    sc.setResult(null);
+    sc.setCountdown(timerSeconds);
   };
 
   const confirmSafe = () => {
-    if (status !== "pending") return;
-    clearMonitoring();
-    setStatus("safe");
-    setMessage("You are marked safe. No alert was sent.");
-  };
-
-  const triggerAlarm = async () => {
-    clearMonitoring();
-    setStatus("alerted");
-    setMessage(
-      `No response within ${timerMinutes} minutes. Alert triggered to ${userInfo?.emergency_contact || "your emergency contact"}.`,
-    );
-
-    try {
-      const data = await triggerSOS(
-        currentPos[0],
-        currentPos[1],
-        userInfo.user_id,
-        userInfo.name,
-        "Smart Check failed: user did not confirm safe.",
-        userInfo.emergency_contact,
-        userInfo.medical_details,
-      );
-      setResult(data);
-    } catch {
-      setMessage("Emergency alert could not be sent. Please try again later.");
-    }
+    if (sc.status !== "pending") return;
+    globalConfirmSafe(); // This cancels both SafeWalk and SmartCheck
   };
 
   const homeDistance = homePos
@@ -229,7 +186,7 @@ export default function SmartCheckPage({ userInfo, onEditProfile }) {
               </button>
               <button
                 onClick={confirmSafe}
-                disabled={status !== "pending"}
+                disabled={sc.status !== "pending"}
                 className="flex-1 py-3 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-semibold disabled:opacity-50"
               >
                 I’m Safe
@@ -250,15 +207,15 @@ export default function SmartCheckPage({ userInfo, onEditProfile }) {
                 type="number"
                 min="1"
                 max="60"
-                value={timerMinutes}
+                value={sc.timerMinutes}
                 onChange={(e) => {
                   const value = Math.max(1, Math.min(60, parseInt(e.target.value) || 1));
-                  setTimerMinutes(value);
-                  if (status === "idle") {
-                    setCountdown(value * 60);
+                  sc.setTimerMinutes(value);
+                  if (sc.status === "idle") {
+                    sc.setCountdown(value * 60);
                   }
                 }}
-                disabled={status === "pending"}
+                disabled={sc.status === "pending"}
                 className="w-20 px-3 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:outline-none focus:border-pink-500 disabled:opacity-50"
               />
               <span className="text-white">minutes</span>
@@ -279,24 +236,24 @@ export default function SmartCheckPage({ userInfo, onEditProfile }) {
                     strokeWidth="8"
                     fill="none"
                   />
-                  {status === "pending" && (
+                  {sc.status === "pending" && (
                     <circle
                       cx="50"
                       cy="50"
                       r="45"
-                      stroke={countdown < 300 ? "#ef4444" : countdown < 600 ? "#f59e0b" : "#22c55e"}
+                      stroke={sc.countdown < 300 ? "#ef4444" : sc.countdown < 600 ? "#f59e0b" : "#22c55e"}
                       strokeWidth="8"
                       fill="none"
                       strokeLinecap="round"
                       strokeDasharray={`${2 * Math.PI * 45}`}
-                      strokeDashoffset={`${2 * Math.PI * 45 * (1 - countdown / (timerMinutes * 60))}`}
+                      strokeDashoffset={`${2 * Math.PI * 45 * (1 - sc.countdown / (sc.timerMinutes * 60))}`}
                       className="transition-all duration-1000 ease-linear"
                     />
                   )}
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-white">{status === "pending" ? formatTime(countdown) : formatTime(timerMinutes * 60)}</p>
+                    <p className="text-2xl font-bold text-white">{sc.status === "pending" ? formatTime(sc.countdown) : formatTime(sc.timerMinutes * 60)}</p>
                     <p className="text-xs text-slate-500">minutes</p>
                   </div>
                 </div>
@@ -305,9 +262,9 @@ export default function SmartCheckPage({ userInfo, onEditProfile }) {
             <p className="text-xs text-slate-500 mt-2 text-center">If you don't confirm safety before the timer runs out, the app will trigger an alert.</p>
           </div>
 
-          {message && (
+          {sc.message && (
             <div className="rounded-2xl bg-blue-900/30 border border-blue-500/30 p-4 text-sm text-slate-200">
-              {message}
+              {sc.message}
             </div>
           )}
 
@@ -327,13 +284,13 @@ export default function SmartCheckPage({ userInfo, onEditProfile }) {
 
         <div className="bg-slate-800/60 rounded-2xl p-6 border border-slate-700">
           <p className="text-sm text-slate-400">Smart Check alert history</p>
-          {result ? (
+          {sc.result ? (
             <div className="mt-4 rounded-2xl bg-green-900/30 border border-green-500/30 p-4 text-sm text-slate-200 space-y-2">
               <p className="font-semibold">Alert triggered</p>
-              <p>Alert ID: {result.alert_id}</p>
-              <p>Station: {result.nearest_station?.name}</p>
-              <p>Contact: {result.emergency_contact || "N/A"}</p>
-              <p>Medical: {result.medical_details || "N/A"}</p>
+              <p>Alert ID: {sc.result.alert_id}</p>
+              <p>Station: {sc.result.nearest_station?.name}</p>
+              <p>Contact: {sc.result.emergency_contact || "N/A"}</p>
+              <p>Medical: {sc.result.medical_details || "N/A"}</p>
             </div>
           ) : (
             <div className="mt-4 rounded-2xl bg-slate-900/30 border border-slate-700 p-4 text-sm text-slate-400">

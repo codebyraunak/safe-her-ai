@@ -1,42 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { startSafeWalk, cancelSafeWalk, extendSafeWalk } from "../api";
 
-export default function SafeWalkPage({ userInfo }) {
-  const [active, setActive] = useState(false);
-  const [destination, setDestination] = useState("");
+export default function SafeWalkPage({ userInfo, monitor }) {
+  const { sw, sc, globalConfirmSafe } = monitor || {};
   const [etaMinutes, setEtaMinutes] = useState(15);
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [etaTime, setEtaTime] = useState(null);
+  const [dest, setDest] = useState(sw?.destination || "");
 
-  // Countdown timer logic
-  useEffect(() => {
-    let timer;
-    if (active && etaTime) {
-      timer = setInterval(() => {
-        const now = new Date();
-        const diff = Math.max(0, Math.floor((etaTime - now) / 1000));
-        setTimeLeft(diff);
-        if (diff === 0) {
-          // Time expired, handle locally if needed, backend handles SOS
-        }
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [active, etaTime]);
+  if (!monitor) return null;
 
   const handleStart = async () => {
-    if (!destination.trim()) return alert("Please enter a destination");
+    if (!dest.trim()) return alert("Please enter a destination");
+    sw.setDestination(dest);
     try {
-      // Dummy coords if no geoloc
       let lat = 12.9716;
       let lng = 77.5946;
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
-          async (pos) => {
-            lat = pos.coords.latitude;
-            lng = pos.coords.longitude;
-            await _start(lat, lng);
-          },
+          async (pos) => await _start(pos.coords.latitude, pos.coords.longitude),
           async () => await _start(lat, lng)
         );
       } else {
@@ -51,22 +31,28 @@ export default function SafeWalkPage({ userInfo }) {
     const res = await startSafeWalk(
       userInfo?.user_id || "anonymous",
       userInfo?.name || "Anonymous",
-      destination,
+      dest,
       etaMinutes,
       lat,
       lng,
       userInfo?.emergency_contact || ""
     );
-    const newEta = new Date(res.eta);
-    setEtaTime(newEta);
-    setActive(true);
+    sw.setEtaTime(new Date(res.eta));
+    sw.setActive(true);
+
+    // AUTO-LINK SMART CHECK: Start background smart check with 15 min default
+    if (sc.status === "idle" || sc.status === "safe" || sc.status === "alerted") {
+      sc.setTimerMinutes(15);
+      sc.setCountdown(15 * 60);
+      sc.setStatus("pending");
+      sc.setMessage("Auto-started by SafeWalk. Tap 'I'm Safe' when you arrive.");
+    }
   };
 
   const handleCancel = async () => {
     try {
       await cancelSafeWalk(userInfo?.user_id || "anonymous");
-      setActive(false);
-      setEtaTime(null);
+      globalConfirmSafe(); // Cancels both SafeWalk and SmartCheck
     } catch (err) {
       alert("Failed to cancel");
     }
@@ -75,7 +61,7 @@ export default function SafeWalkPage({ userInfo }) {
   const handleExtend = async () => {
     try {
       const res = await extendSafeWalk(userInfo?.user_id || "anonymous", 10);
-      setEtaTime(new Date(res.new_eta));
+      sw.setEtaTime(new Date(res.new_eta));
     } catch (err) {
       alert("Failed to extend");
     }
@@ -96,15 +82,15 @@ export default function SafeWalkPage({ userInfo }) {
         </p>
       </div>
 
-      {!active ? (
+      {!sw.active ? (
         <div className="bg-slate-900/80 border border-slate-700 rounded-2xl p-6 mt-4 shadow-xl">
           <div className="space-y-5">
             <div>
               <label className="block text-sm text-slate-400 mb-1">Where are you heading?</label>
               <input
                 type="text"
-                value={destination}
-                onChange={(e) => setDestination(e.target.value)}
+                value={dest}
+                onChange={(e) => setDest(e.target.value)}
                 placeholder="e.g. Home, Subway Station"
                 className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-emerald-500 transition-colors"
               />
@@ -138,11 +124,11 @@ export default function SafeWalkPage({ userInfo }) {
             <span className="absolute text-2xl text-emerald-400">🛡️</span>
           </div>
           
-          <h2 className="text-xl font-semibold text-white mb-1">Heading to {destination}</h2>
+          <h2 className="text-xl font-semibold text-white mb-1">Heading to {sw.destination}</h2>
           <p className="text-slate-400 mb-6">Tracking active. We're keeping an eye out.</p>
 
           <div className="text-6xl font-mono font-bold text-white mb-8 tracking-wider font-variant-numeric">
-            {formatTime(timeLeft)}
+            {formatTime(sw.timeLeft)}
           </div>
 
           <div className="grid grid-cols-2 gap-4 w-full">
