@@ -22,7 +22,7 @@ function formatTime(seconds) {
   return `${mins}:${secs}`;
 }
 
-export default function SmartCheckPage({ userInfo, onEditProfile, monitor }) {
+export default function SmartCheckPage({ userInfo, onEditProfile, monitor, isSubComponent }) {
   const { sc, globalConfirmSafe } = monitor || {};
   const [currentPos, setCurrentPos] = useState(DEFAULT_POS);
   const [homePos, setHomePos] = useState(null);
@@ -108,12 +108,20 @@ export default function SmartCheckPage({ userInfo, onEditProfile, monitor }) {
 
   return (
     <div className="flex flex-col gap-4 h-full">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Smart Check</h1>
-        <p className="text-sm text-slate-400">Monitor your routine and send an automatic alert if you don’t confirm safety in time.</p>
-      </div>
+      {!isSubComponent && (
+        <div>
+          <h1 className="text-2xl font-bold text-white">Smart Check</h1>
+          <p className="text-sm text-slate-400">Monitor your routine and send an automatic alert if you don’t confirm safety in time.</p>
+        </div>
+      )}
+      {isSubComponent && (
+        <div className="text-center mt-2 mb-2">
+          <h2 className="text-2xl font-bold text-white mb-1">Smart Check</h2>
+          <p className="text-xs text-slate-400">Routine background monitoring.</p>
+        </div>
+      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1">
+      <div className={`grid grid-cols-1 ${isSubComponent ? '' : 'lg:grid-cols-2'} gap-4 flex-1`}>
         <div className="bg-slate-800/60 rounded-2xl p-6 border border-slate-700 space-y-4">
           <div className="rounded-2xl bg-slate-900/50 p-4 border border-slate-700 space-y-3">
             <div className="flex items-center justify-between">

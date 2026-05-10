@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { startSafeWalk, cancelSafeWalk, extendSafeWalk } from "../api";
 
-export default function SafeWalkPage({ userInfo, monitor }) {
+export default function SafeWalkPage({ userInfo, monitor, isSubComponent }) {
   const { sw, sc, globalConfirmSafe } = monitor || {};
   const [etaMinutes, setEtaMinutes] = useState(15);
   const [dest, setDest] = useState(sw?.destination || "");
@@ -75,12 +75,20 @@ export default function SafeWalkPage({ userInfo, monitor }) {
 
   return (
     <div className="flex flex-col h-full gap-4 max-w-md mx-auto w-full">
-      <div className="text-center mt-6">
-        <h1 className="text-3xl font-bold text-white mb-2">Safe Walk Mode</h1>
-        <p className="text-sm text-slate-400">
-          We'll watch your back. Set an ETA and if you don't check in by then, we'll automatically alert your emergency contacts and nearby users.
-        </p>
-      </div>
+      {!isSubComponent && (
+        <div className="text-center mt-6">
+          <h1 className="text-3xl font-bold text-white mb-2">Safe Walk Mode</h1>
+          <p className="text-sm text-slate-400">
+            We'll watch your back. Set an ETA and if you don't check in by then, we'll automatically alert your emergency contacts and nearby users.
+          </p>
+        </div>
+      )}
+      {isSubComponent && (
+        <div className="text-center mt-2 mb-2">
+          <h2 className="text-2xl font-bold text-white mb-1">Safe Walk</h2>
+          <p className="text-xs text-slate-400">Live destination tracking & ETA alerts.</p>
+        </div>
+      )}
 
       {!sw.active ? (
         <div className="bg-slate-900/80 border border-slate-700 rounded-2xl p-6 mt-4 shadow-xl">
