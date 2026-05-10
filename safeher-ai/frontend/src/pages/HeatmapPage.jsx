@@ -1,7 +1,17 @@
 import { useEffect, useState, useCallback } from "react";
-import { MapContainer, TileLayer, Circle, Popup } from "react-leaflet";
-import { getHeatmap, getHotspots, getNearestHelper } from "../api";
+import { MapContainer, TileLayer, Circle, Popup, useMapEvents, CircleMarker } from "react-leaflet";
+import { getHeatmap, getHotspots, getNearestHelper, reportDangerPin, getDangerPins, getSafeSpots, getIncidentHistory } from "../api";
 import "leaflet/dist/leaflet.css";
+
+function MapEvents({ onClick }) {
+  useMapEvents({
+    click(e) {
+      onClick(e.latlng);
+    },
+  });
+  return null;
+}
+
 
 const RISK_COLORS = {
   1: "#22c55e",  // Very Low - green
@@ -27,23 +37,39 @@ export default function HeatmapPage({ userInfo }) {
   const [currentPos, setCurrentPos] = useState(null);
   const [nearestHelper, setNearestHelper] = useState(null);
   const [homeSaved, setHomeSaved] = useState(false);
+  const [dangerPins, setDangerPins] = useState([]);
+  const [reportModal, setReportModal] = useState({ open: false, lat: null, lng: null });
+  const [reportType, setReportType] = useState("Harassment");
+  const [reportDesc, setReportDesc] = useState("");
+  const [showSafeSpots, setShowSafeSpots] = useState(false);
+  const [safeSpots, setSafeSpots] = useState([]);
+  const [incidents, setIncidents] = useState([]);
+  const [showFeed, setShowFeed] = useState(false);
+
+
 
   const fetchHeatmap = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const [hm, hs] = await Promise.all([
+      const [hm, hs, dp, inc] = await Promise.all([
         getHeatmap(DEFAULT_CENTER[0], DEFAULT_CENTER[1], appliedHour, new Date().getDay()),
         getHotspots(),
+        getDangerPins(),
+        getIncidentHistory(),
       ]);
       setPoints(hm.points || []);
       setHotspots(hs.clusters || []);
+      setDangerPins(dp || []);
+      setIncidents(inc.incidents || []);
     } catch (e) {
       setError("Could not load heatmap. Is the backend running?");
     } finally {
       setLoading(false);
     }
   }, [appliedHour]);
+
+
 
   useEffect(() => { fetchHeatmap(); }, [fetchHeatmap]);
 
@@ -83,6 +109,39 @@ export default function HeatmapPage({ userInfo }) {
       .then((data) => setNearestHelper(data.nearest_helper || null))
       .catch(() => setNearestHelper(null));
   }, [currentPos, userInfo]);
+
+  const handleMapClick = (latlng) => {
+    setReportModal({ open: true, lat: latlng.lat, lng: latlng.lng });
+  };
+
+  const submitDangerPin = async () => {
+    try {
+      await reportDangerPin(reportModal.lat, reportModal.lng, reportType, reportDesc);
+      setReportModal({ open: false, lat: null, lng: null });
+      setReportDesc("");
+      fetchHeatmap();
+    } catch (err) {
+      alert("Failed to report danger pin.");
+    }
+  };
+
+  const handleToggleSafeSpots = async () => {
+    const newVal = !showSafeSpots;
+    setShowSafeSpots(newVal);
+    if (newVal && safeSpots.length === 0) {
+      setLoading(true);
+      try {
+        const res = await getSafeSpots(DEFAULT_CENTER[0], DEFAULT_CENTER[1], 4000);
+        setSafeSpots(res.spots || []);
+      } catch (err) {
+        alert("Failed to load safe spots");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+
 
   return (
     <div className="flex flex-col h-full gap-4">
@@ -137,7 +196,18 @@ export default function HeatmapPage({ userInfo }) {
               disabled={loading}
               className="w-full rounded-2xl bg-gradient-to-r from-pink-600 to-fuchsia-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-pink-500/20 transition hover:from-pink-500 hover:to-fuchsia-400 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {loading ? "Refreshing…" : previewButtonLabel}
+              {loading ? "Loading…" : previewButtonLabel}
+            </button>
+            <button
+              onClick={handleToggleSafeSpots}
+              disabled={loading}
+              className={`w-full rounded-2xl px-4 py-3 text-sm font-semibold shadow-lg transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                showSafeSpots
+                  ? "bg-slate-700 text-white border border-slate-600"
+                  : "bg-gradient-to-r from-blue-600 to-blue-500 text-white border border-transparent hover:from-blue-500 hover:to-blue-400"
+              }`}
+            >
+              {showSafeSpots ? "Hide Safe Spots" : "Show Safe Spots (Police/Hospital)"}
             </button>
           </div>
         </div>
@@ -159,7 +229,16 @@ export default function HeatmapPage({ userInfo }) {
           <div className="w-3 h-3 rounded-full border-2 border-pink-400" />
           <span className="text-xs text-slate-400">DBSCAN Hotspot</span>
         </div>
+        <div className="flex items-center gap-1.5 ml-4">
+          <div className="w-3 h-3 rounded-full bg-red-500 border border-white" />
+          <span className="text-xs text-slate-400">Danger Pin</span>
+        </div>
+        <div className="flex items-center gap-1.5 ml-4">
+          <div className="w-3 h-3 rounded-full bg-blue-500" />
+          <span className="text-xs text-slate-400">Safe Spot</span>
+        </div>
       </div>
+
 
       {/* Map */}
       <div className="flex-1 rounded-2xl overflow-hidden border border-slate-700 min-h-[420px]">
@@ -168,11 +247,12 @@ export default function HeatmapPage({ userInfo }) {
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             attribution='&copy; OpenStreetMap &copy; CartoDB'
           />
+          <MapEvents onClick={handleMapClick} />
           {points.map((pt, i) => (
             <Circle
               key={i}
               center={[pt.lat, pt.lng]}
-              radius={250}
+              radius={550}
               pathOptions={{
                 color: RISK_COLORS[pt.risk] || "#94a3b8",
                 fillColor: RISK_COLORS[pt.risk] || "#94a3b8",
@@ -206,7 +286,73 @@ export default function HeatmapPage({ userInfo }) {
               </Popup>
             </Circle>
           ))}
+          {dangerPins.map((pin, i) => (
+            <CircleMarker
+              key={`pin-${i}`}
+              center={[pin.lat, pin.lng]}
+              radius={6}
+              pathOptions={{ color: "white", fillColor: "#ef4444", fillOpacity: 1, weight: 2 }}
+            >
+              <Popup>
+                <div className="text-sm">
+                  <strong>🚨 Danger Pin</strong><br />
+                  Type: {pin.type}<br />
+                  {pin.description && <span>Desc: {pin.description}</span>}
+                </div>
+              </Popup>
+            </CircleMarker>
+          ))}
+          {showSafeSpots && safeSpots.map((spot, i) => {
+            let color = "#3b82f6"; // blue - police
+            if (spot.type === "hospital") color = "#22c55e"; // green
+            if (spot.type === "24/7 shop") color = "#eab308"; // yellow
+            return (
+              <CircleMarker
+                key={`spot-${i}`}
+                center={[spot.lat, spot.lng]}
+                radius={7}
+                pathOptions={{ color: "white", fillColor: color, fillOpacity: 1, weight: 2 }}
+              >
+                <Popup>
+                  <div className="text-sm">
+                    <strong>🛡️ Safe Spot</strong><br />
+                    Name: {spot.name}<br />
+                    Type: {spot.type}
+                  </div>
+                </Popup>
+              </CircleMarker>
+            );
+          })}
         </MapContainer>
+        
+        {/* Incident History Feed Overlay */}
+        <div className="absolute top-4 right-4 z-[400] flex flex-col items-end">
+          <button
+            onClick={() => setShowFeed(!showFeed)}
+            className="mb-2 rounded-xl bg-slate-900/90 border border-slate-700 px-4 py-2 text-sm font-semibold text-white shadow-xl backdrop-blur-md hover:bg-slate-800 transition"
+          >
+            {showFeed ? "Hide Activity Feed" : "Live Activity Feed 🔔"}
+          </button>
+          
+          {showFeed && (
+            <div className="w-80 max-h-96 overflow-y-auto rounded-2xl bg-slate-900/95 border border-slate-700 shadow-2xl backdrop-blur-xl p-4 flex flex-col gap-3">
+              <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-1 sticky top-0 bg-slate-900/95 pb-2">
+                Recent Reports
+              </h3>
+              {incidents.length === 0 ? (
+                <p className="text-xs text-slate-500">No recent incidents.</p>
+              ) : (
+                incidents.map((inc) => (
+                  <div key={inc.id} className="border-l-2 border-pink-500 pl-3 py-1">
+                    <p className="text-xs text-pink-400 font-semibold">{inc.type}</p>
+                    <p className="text-sm text-slate-300">{inc.area}</p>
+                    <p className="text-xs text-slate-500 mt-1">{inc.relative_time}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Stats */}
@@ -233,6 +379,59 @@ export default function HeatmapPage({ userInfo }) {
           <p className="text-xs text-slate-500 mt-2">This app will try to route your emergency to the closest other user available.</p>
         </div>
       </div>
+
+      {/* Report Modal */}
+      {reportModal.open && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-slate-900 border border-slate-700 p-6 shadow-xl">
+            <h2 className="text-xl font-bold text-white mb-4">Report Danger Here?</h2>
+            <p className="text-sm text-slate-400 mb-4">
+              {reportModal.lat.toFixed(4)}, {reportModal.lng.toFixed(4)}
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Type of Danger</label>
+                <select
+                  value={reportType}
+                  onChange={(e) => setReportType(e.target.value)}
+                  className="w-full rounded-lg bg-slate-800 border border-slate-700 p-2 text-white outline-none focus:border-pink-500"
+                >
+                  <option>Harassment</option>
+                  <option>Suspicious Activity</option>
+                  <option>Poor Lighting</option>
+                  <option>Accident / Hazard</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Description (Optional)</label>
+                <input
+                  type="text"
+                  value={reportDesc}
+                  onChange={(e) => setReportDesc(e.target.value)}
+                  placeholder="Additional details..."
+                  className="w-full rounded-lg bg-slate-800 border border-slate-700 p-2 text-white outline-none focus:border-pink-500"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setReportModal({ open: false, lat: null, lng: null })}
+                className="flex-1 rounded-lg bg-slate-800 py-2 text-sm font-semibold text-white hover:bg-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitDangerPin}
+                className="flex-1 rounded-lg bg-red-600 py-2 text-sm font-semibold text-white hover:bg-red-500"
+              >
+                Report
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

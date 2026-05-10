@@ -5,14 +5,18 @@ import LightingPage from "./pages/LightingPage";
 import SOSPage      from "./pages/SOSPage";
 import StartPage    from "./pages/StartPage";
 import SmartCheckPage from "./pages/SmartCheckPage";
+import FakeCallPage from "./pages/FakeCallPage";
+import SafeWalkPage from "./pages/SafeWalkPage";
 import { registerUser } from "./api";
 
 const NAV = [
   { id: "start",      label: "Profile Setup",      icon: "👤",  desc: "Save your SOS info" },
   { id: "heatmap",    label: "Safety Heatmap",    icon: "🗺️",  desc: "AI-predicted risk zones" },
   { id: "route",      label: "Safe Route Scorer",  icon: "🛣️",  desc: "Score your route" },
-  { id: "lighting",   label: "Smart Lighting",     icon: "💡",  desc: "Traffic-based brightness" },
+  { id: "safewalk",   label: "SafeWalk AI",        icon: "🚶‍♀️", desc: "Live monitoring" },
+  { id: "lighting",   label: "Smart Lighting",     icon: "💡",  desc: "Working & broken status" },
   { id: "smartcheck", label: "Smart Check",        icon: "✅",  desc: "Routine safety monitoring" },
+  { id: "fakecall",   label: "Fake Call",          icon: "📞",  desc: "Simulate an incoming call" },
   { id: "sos",        label: "SOS Alert",          icon: "🆘",  desc: "Emergency dispatch" },
 ];
 
@@ -64,8 +68,10 @@ export default function App() {
     start:      StartPage,
     heatmap:    HeatmapPage,
     route:      RoutePage,
+    safewalk:   SafeWalkPage,
     lighting:   LightingPage,
     smartcheck: SmartCheckPage,
+    fakecall:   FakeCallPage,
     sos:        SOSPage,
   }[page];
 

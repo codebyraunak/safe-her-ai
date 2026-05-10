@@ -66,14 +66,14 @@ export default function RoutePage() {
       );
       if (data.routes?.length === 0) throw new Error("No routes found");
 
-      const unique = data.routes.filter((r, i, arr) =>
-        i === 0 || Math.abs(r.distance_m - arr[i - 1].distance_m) > 500
-      );
+      // Keep all routes returned by OpenRouteService (they are structurally different)
+      const unique = data.routes || [];
 
       setRoutes(unique);
       setSelectedRoute(0);
-    } catch {
-      setError("OpenRouteService unavailable — showing direct route score instead.");
+    } catch (err) {
+      console.error("Error finding safe route:", err);
+      setError("OpenRouteService API key missing or invalid. Showing direct straight-line route instead.");
       try {
         const waypoints = [
           { lat: start.lat, lng: start.lng },
@@ -244,20 +244,39 @@ export default function RoutePage() {
           />
           {routes.length > 0 && <FitBounds routes={routes} />}
 
+          {/* Render unselected routes first (background) */}
           {routes.map((route, i) => {
-            const isSelected = selectedRoute === i;
+            if (selectedRoute === i) return null;
             const isSafest = route.is_safest;
             return (
               <Polyline
-                key={i}
+                key={`bg-${i}`}
                 positions={route.coordinates}
                 pathOptions={{
                   color: isSafest ? "#22c55e" : SCORE_COLOR(route.score).line,
-                  weight: isSelected ? 6 : 3,
-                  opacity: isSelected ? 1 : 0.4,
-                  dashArray: isSafest ? null : "6 4",
+                  weight: 4,
+                  opacity: 0.5,
+                  dashArray: isSafest ? null : "8 6",
                 }}
                 eventHandlers={{ click: () => setSelectedRoute(i) }}
+              />
+            );
+          })}
+
+          {/* Render selected route last (foreground) */}
+          {routes.map((route, i) => {
+            if (selectedRoute !== i) return null;
+            const isSafest = route.is_safest;
+            return (
+              <Polyline
+                key={`fg-${i}`}
+                positions={route.coordinates}
+                pathOptions={{
+                  color: isSafest ? "#22c55e" : SCORE_COLOR(route.score).line,
+                  weight: 7,
+                  opacity: 1,
+                  dashArray: isSafest ? null : "6 4",
+                }}
               />
             );
           })}

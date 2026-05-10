@@ -4,6 +4,10 @@ from pydantic import BaseModel, Field, validator
 from typing import List, Optional
 from datetime import datetime
 import os
+from dotenv import load_dotenv
+
+env_path = os.path.join(os.path.dirname(__file__), ".env")
+load_dotenv(dotenv_path=env_path)
 
 from model import (
     generate_heatmap,
@@ -18,6 +22,9 @@ from lighting import (
 )
 from sos import trigger_sos, get_sos_log, find_nearest_station, find_all_stations
 from users import register_user, find_nearest_user
+from safewalk import SafeWalkStartRequest, start_safe_walk, cancel_safe_walk, extend_safe_walk, check_active_walks
+from safespots import get_safe_spots
+import asyncio
 
 app = FastAPI(
     title="SafeHer AI API",
@@ -37,6 +44,11 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(check_active_walks())
+
 
 # ── Request Models ─────────────────────────────────────────────────────────────
 
@@ -91,6 +103,13 @@ class UserRegisterRequest(BaseModel):
     medical_details: str = ""
     lat: float = Field(..., ge=-90, le=90)
     lng: float = Field(..., ge=-180, le=180)
+
+class DangerPinRequest(BaseModel):
+    lat: float = Field(..., ge=-90, le=90)
+    lng: float = Field(..., ge=-180, le=180)
+    type: str
+    description: Optional[str] = ""
+
 
 # ── Health ─────────────────────────────────────────────────────────────────────
 
@@ -175,7 +194,11 @@ def find_safe_route(req: RouteRequest):
             headers={"Authorization": ORS_KEY, "Content-Type": "application/json"},
             json={
                 "coordinates": [[start.lng, start.lat], [end.lng, end.lat]],
-                "alternative_routes": {"share_factor": 0.6, "target_count": 3},
+                "alternative_routes": {
+                    "share_factor": 0.3,
+                    "target_count": 3,
+                    "weight_factor": 2.0
+                },
             },
             timeout=10,  # FIX: Always set a timeout for external HTTP calls
         )
@@ -191,8 +214,8 @@ def find_safe_route(req: RouteRequest):
     scored_routes = []
     for i, feature in enumerate(features):
         coords = feature["geometry"]["coordinates"]
-        step = max(1, len(coords) // 5)
-        waypoints = [{"lat": c[1], "lng": c[0]} for c in coords[::step]][:5]
+        step = max(1, len(coords) // 50)
+        waypoints = [{"lat": c[1], "lng": c[0]} for c in coords[::step]][:50]
         score_result = score_route(waypoints, hour, dow)
         summary = feature["properties"]["summary"]
         scored_routes.append({
@@ -299,3 +322,91 @@ def nearest_station(lat: float, lng: float):
         "nearest_station": stations[0] if stations else None,
         "stations": stations,
     }
+
+# ── Crowd-Sourced Pins ─────────────────────────────────────────────────────────
+
+@app.post("/api/pins/report")
+def report_danger_pin(req: DangerPinRequest):
+    import json
+    pins_file = os.path.join(os.path.dirname(__file__), "data", "danger_pins.json")
+    pins = []
+    if os.path.exists(pins_file):
+        with open(pins_file, "r") as f:
+            try:
+                pins = json.load(f)
+            except json.JSONDecodeError:
+                pass
+    new_pin = req.dict()
+    new_pin["timestamp"] = datetime.now().isoformat()
+    pins.append(new_pin)
+    with open(pins_file, "w") as f:
+        json.dump(pins, f, indent=2)
+    return {"status": "success", "pin": new_pin}
+
+@app.get("/api/pins")
+def get_danger_pins():
+    import json
+    pins_file = os.path.join(os.path.dirname(__file__), "data", "danger_pins.json")
+    if os.path.exists(pins_file):
+        with open(pins_file, "r") as f:
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+    return []
+
+# ── Safe Walk Mode ─────────────────────────────────────────────────────────────
+
+@app.post("/api/safewalk/start")
+def api_start_safe_walk(req: SafeWalkStartRequest):
+    return start_safe_walk(req)
+
+@app.post("/api/safewalk/cancel")
+def api_cancel_safe_walk(user_id: str):
+    return cancel_safe_walk(user_id)
+
+@app.post("/api/safewalk/extend")
+def api_extend_safe_walk(user_id: str, minutes: int = 15):
+    return extend_safe_walk(user_id, minutes)
+
+# ── Safe Spots Layer ───────────────────────────────────────────────────────────
+
+@app.get("/api/safe-spots")
+def api_get_safe_spots(lat: float, lng: float, radius: int = 2000):
+    return get_safe_spots(lat, lng, radius)
+
+# ── Incident History Feed ───────────────────────────────────────────────────────
+
+@app.get("/api/incidents/history")
+def api_get_incident_history():
+    import pandas as pd
+    from datetime import datetime, timedelta
+    data_path = os.path.join(os.path.dirname(__file__), "data", "incidents.csv")
+    if not os.path.exists(data_path):
+        return {"incidents": []}
+        
+    df = pd.read_csv(data_path)
+    # Sort by some logic or just take last N rows. 
+    # The dataset might not have real timestamps, so let's synthesize recent times
+    recent = df.tail(15).copy()
+    
+    incidents = []
+    now = datetime.now()
+    for i, row in enumerate(recent.itertuples()):
+        # Mock recent time: from 1 min ago to 5 hours ago
+        time_diff = timedelta(minutes=i*15 + 2)
+        inc_time = now - time_diff
+        
+        incidents.append({
+            "id": getattr(row, "id", i),
+            "type": getattr(row, "incident_type", "Unknown").title(),
+            "lat": getattr(row, "lat", 0),
+            "lng": getattr(row, "lng", 0),
+            "area": getattr(row, "area", "Unknown Area"),
+            "time": inc_time.isoformat(),
+            "relative_time": f"{int(time_diff.total_seconds() // 60)} mins ago" if time_diff.total_seconds() < 3600 else f"{int(time_diff.total_seconds() // 3600)} hours ago"
+        })
+    
+    return {"incidents": incidents[::-1]}
+
+
+

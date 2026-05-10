@@ -40,3 +40,23 @@ export const getNearestStation = (lat, lng) =>
   api(`/api/sos/nearest-station?lat=${lat}&lng=${lng}`);
 export const findSafeRoute = (waypoints, hour, day_of_week) =>
   api("/api/route/find-safe", "POST", { waypoints, hour, day_of_week });
+
+export const reportDangerPin = (lat, lng, type, description) =>
+  api("/api/pins/report", "POST", { lat, lng, type, description });
+export const getDangerPins = () => api("/api/pins");
+
+export const startSafeWalk = (user_id, user_name, destination, eta_minutes, lat, lng, emergency_contact) =>
+  api("/api/safewalk/start", "POST", { user_id, user_name, destination, eta_minutes, lat, lng, emergency_contact });
+export const cancelSafeWalk = (user_id) =>
+  api(`/api/safewalk/cancel?user_id=${user_id}`, "POST");
+export const extendSafeWalk = (user_id, minutes) =>
+  api(`/api/safewalk/extend?user_id=${user_id}&minutes=${minutes}`, "POST");
+
+export const getSafeSpots = (lat, lng, radius = 2000) =>
+  api(`/api/safe-spots?lat=${lat}&lng=${lng}&radius=${radius}`);
+
+export const getIncidentHistory = () => api("/api/incidents/history");
+
+
+
+

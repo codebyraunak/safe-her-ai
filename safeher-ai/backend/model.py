@@ -4,6 +4,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import LabelEncoder
 import os
+from functools import lru_cache
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "incidents.csv")
 
@@ -71,6 +72,7 @@ def get_hotspot_clusters():
 
 # ── Predict risk for a zone ───────────────────────────────────────────────────
 
+@lru_cache(maxsize=2048)
 def predict_zone_risk(lat: float, lng: float, hour: int, day_of_week: int, lighting: str = "dim") -> dict:
     # FIX: Use LIGHTING_LE (not INCIDENT_LE) for lighting encoding; fall back gracefully
     known_lightings = list(LIGHTING_LE.classes_)
@@ -109,8 +111,19 @@ def predict_zone_risk(lat: float, lng: float, hour: int, day_of_week: int, light
 
 def generate_heatmap(center_lat: float, center_lng: float, hour: int, day_of_week: int) -> list:
     points = []
-    for dlat in np.arange(-0.02, 0.022, 0.005):
-        for dlng in np.arange(-0.02, 0.022, 0.005):
+    
+    import json
+    pins_file = os.path.join(os.path.dirname(__file__), "data", "danger_pins.json")
+    danger_pins = []
+    if os.path.exists(pins_file):
+        with open(pins_file, "r") as f:
+            try:
+                danger_pins = json.load(f)
+            except json.JSONDecodeError:
+                pass
+
+    for dlat in np.arange(-0.08, 0.085, 0.01):
+        for dlng in np.arange(-0.08, 0.085, 0.01):
             lat = round(center_lat + float(dlat), 5)
             lng = round(center_lng + float(dlng), 5)
             # Determine lighting based on time of day
@@ -121,11 +134,23 @@ def generate_heatmap(center_lat: float, center_lng: float, hour: int, day_of_wee
             else:
                 lighting = "good"
             result = predict_zone_risk(lat, lng, hour, day_of_week, lighting)
+            
+            risk = result["risk_level"]
+            
+            # Apply user danger pins to increase risk
+            for pin in danger_pins:
+                dist = np.sqrt((pin["lat"] - lat)**2 + (pin["lng"] - lng)**2)
+                if dist < 0.015:  # Within approx ~1.5km
+                    risk = min(5, risk + 2)  # Increase risk significantly
+            
+            risk_idx = min(risk - 1, len(RISK_LABELS) - 1)
+            risk_idx = max(risk_idx, 0)
+            
             points.append({
                 "lat": lat,
                 "lng": lng,
-                "risk": result["risk_level"],
-                "label": result["risk_label"],
+                "risk": risk,
+                "label": RISK_LABELS[risk_idx],
             })
     return points
 
@@ -135,9 +160,23 @@ def score_route(waypoints: list, hour: int, day_of_week: int) -> dict:
     if not waypoints:
         return {"score": 100, "label": "Unknown", "avg_risk": 0.0, "zone_breakdown": []}
 
+    from lighting import get_zone_lighting
+
     scores = []
     for wp in waypoints:
-        result = predict_zone_risk(wp["lat"], wp["lng"], hour, day_of_week)
+        # Get real lighting data for this point
+        light_data = get_zone_lighting(wp["lat"], wp["lng"], hour)
+        mode = light_data.get("mode", "Dim")
+        
+        # Map lighting mode to ML model input categories
+        if mode in ["Full", "Active"]:
+            lighting_cat = "good"
+        elif mode in ["No Light", "Broken"]:
+            lighting_cat = "none"
+        else:
+            lighting_cat = "dim"
+            
+        result = predict_zone_risk(wp["lat"], wp["lng"], hour, day_of_week, lighting=lighting_cat)
         scores.append(result["risk_level"])
 
     avg_risk = float(np.mean(scores))
