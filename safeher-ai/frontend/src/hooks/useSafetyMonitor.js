@@ -70,6 +70,12 @@ export function useSafetyMonitor(userInfo, currentPos) {
 
     return () => clearInterval(intervalRef.current);
   }, [swActive, swEtaTime, scStatus, userInfo, currentPos, scTimerMinutes]);
+  useEffect(() => {
+  if (swEtaTime && swActive) {
+    const diff = Math.max(0, Math.floor((swEtaTime - new Date()) / 1000));
+    setSwTimeLeft(diff);
+  }
+}, [swEtaTime]);
 
   const globalConfirmSafe = () => {
     setSwActive(false);
