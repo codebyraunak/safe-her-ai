@@ -352,6 +352,7 @@ def get_danger_pins():
             try:
                 return json.load(f)
             except json.JSONDecodeError:
+                return []
     return []
 
 # ── Safe Walk Mode ─────────────────────────────────────────────────────────────
