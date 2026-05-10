@@ -1,9 +1,29 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { startSafeWalk, cancelSafeWalk, extendSafeWalk } from "../api";
 
 export default function SafeWalkPage({ userInfo, monitor, isSubComponent }) {
   const { sw, sc, globalConfirmSafe } = monitor || {};
   const [etaMinutes, setEtaMinutes] = useState(15);
+  const intervalRef = useRef(null);
+
+useEffect(() => {
+  if (sw?.active) {
+    sw.setTimeLeft(etaMinutes * 60);
+    intervalRef.current = setInterval(() => {
+      sw.setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(intervalRef.current);
+          alert("⚠️ SafeWalk timer expired! Alerting emergency contacts...");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  } else {
+    clearInterval(intervalRef.current);
+  }
+  return () => clearInterval(intervalRef.current);
+}, [sw?.active]);
   const [dest, setDest] = useState(sw?.destination || "");
 
   if (!monitor) return null;
