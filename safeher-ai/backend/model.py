@@ -137,36 +137,44 @@ def generate_heatmap(center_lat: float, center_lng: float, hour: int, day_of_wee
             except json.JSONDecodeError:
                 pass
 
-    for dlat in np.arange(-0.08, 0.085, 0.01):
-        for dlng in np.arange(-0.08, 0.085, 0.01):
-            lat = round(center_lat + float(dlat), 5)
-            lng = round(center_lng + float(dlng), 5)
-            # Determine lighting based on time of day
-            if hour >= 21 or hour <= 5:
-                lighting = "none"
-            elif hour >= 18:
-                lighting = "dim"
-            else:
-                lighting = "good"
-            result = predict_zone_risk(lat, lng, hour, day_of_week, lighting)
-            
-            risk = result["risk_level"]
-            
-            # Apply user danger pins to increase risk
-            for pin in danger_pins:
-                dist = np.sqrt((pin["lat"] - lat)**2 + (pin["lng"] - lng)**2)
-                if dist < 0.015:  # Within approx ~1.5km
-                    risk = min(5, risk + 2)  # Increase risk significantly
-            
-            risk_idx = min(risk - 1, len(RISK_LABELS) - 1)
-            risk_idx = max(risk_idx, 0)
-            
-            points.append({
-                "lat": lat,
-                "lng": lng,
-                "risk": risk,
-                "label": RISK_LABELS[risk_idx],
-            })
+    BANGALORE_BOUNDS = {"lat_min": 12.73, "lat_max": 13.15, "lng_min": 77.45, "lng_max": 77.80}
+    MYSORE_BOUNDS = {"lat_min": 12.23, "lat_max": 12.38, "lng_min": 76.55, "lng_max": 76.73}
+    
+    cities = [BANGALORE_BOUNDS, MYSORE_BOUNDS]
+    
+    for bounds in cities:
+        for lat_val in np.arange(bounds["lat_min"], bounds["lat_max"], 0.015):
+            for lng_val in np.arange(bounds["lng_min"], bounds["lng_max"], 0.015):
+                lat = round(float(lat_val), 5)
+                lng = round(float(lng_val), 5)
+                # Determine lighting based on time of day
+                if hour >= 21 or hour <= 5:
+                    lighting = "none"
+                elif hour >= 18:
+                    lighting = "dim"
+                else:
+                    lighting = "good"
+                result = predict_zone_risk(lat, lng, hour, day_of_week, lighting)
+                
+                risk = result["risk_level"]
+                
+                # Apply user danger pins to increase risk
+                for pin in danger_pins:
+                    dist = np.sqrt((pin["lat"] - lat)**2 + (pin["lng"] - lng)**2)
+                    if dist < 0.015:  # Within approx ~1.5km
+                        risk = min(5, risk + 2)  # Increase risk significantly
+                
+                # Filter to only show Moderate, High, Critical
+                if risk >= 3:
+                    risk_idx = min(risk - 1, len(RISK_LABELS) - 1)
+                    risk_idx = max(risk_idx, 0)
+                    
+                    points.append({
+                        "lat": lat,
+                        "lng": lng,
+                        "risk": risk,
+                        "label": RISK_LABELS[risk_idx],
+                    })
     return points
 
 # ── Route safety score ────────────────────────────────────────────────────────
