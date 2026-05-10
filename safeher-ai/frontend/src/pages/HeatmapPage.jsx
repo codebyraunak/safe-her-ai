@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { MapContainer, TileLayer, Circle, Popup, useMapEvents, CircleMarker } from "react-leaflet";
+import { MapContainer, TileLayer, Circle, Popup, useMapEvents, CircleMarker, Polygon } from "react-leaflet";
 import { getHeatmap, getHotspots, getNearestHelper, reportDangerPin, getDangerPins, getSafeSpots, getIncidentHistory } from "../api";
 import "leaflet/dist/leaflet.css";
 
@@ -25,6 +25,19 @@ const RISK_OPACITY = { 1: 0.25, 2: 0.3, 3: 0.4, 4: 0.5, 5: 0.6 };
 
 // Bengaluru center
 const DEFAULT_CENTER = [12.9716, 77.5946];
+
+const WORLD_BOUNDS = [
+  [90, -180],
+  [90, 180],
+  [-90, 180],
+  [-90, -180],
+];
+const DATA_BOUNDS = [
+  [DEFAULT_CENTER[0] - 0.08, DEFAULT_CENTER[1] - 0.08],
+  [DEFAULT_CENTER[0] - 0.08, DEFAULT_CENTER[1] + 0.08],
+  [DEFAULT_CENTER[0] + 0.08, DEFAULT_CENTER[1] + 0.08],
+  [DEFAULT_CENTER[0] + 0.08, DEFAULT_CENTER[1] - 0.08],
+];
 
 export default function HeatmapPage({ userInfo }) {
   const [points,   setPoints]   = useState([]);
@@ -246,6 +259,10 @@ export default function HeatmapPage({ userInfo }) {
           <TileLayer
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             attribution='&copy; OpenStreetMap &copy; CartoDB'
+          />
+          <Polygon
+            positions={[WORLD_BOUNDS, DATA_BOUNDS]}
+            pathOptions={{ color: "transparent", fillColor: "#0f172a", fillOpacity: 0.7 }}
           />
           <MapEvents onClick={handleMapClick} />
           {points.map((pt, i) => (

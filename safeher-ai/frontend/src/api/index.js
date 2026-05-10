@@ -57,6 +57,6 @@ export const getSafeSpots = (lat, lng, radius = 2000) =>
 
 export const getIncidentHistory = () => api("/api/incidents/history");
 
-
+export const searchLocation = (query) => api(`/api/geocode?q=${encodeURIComponent(query)}`);
 
 

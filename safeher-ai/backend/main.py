@@ -156,6 +156,20 @@ def hotspots():
         raise HTTPException(status_code=500, detail=f"Hotspot clustering failed: {str(e)}")
     return {"clusters": clusters, "total": len(clusters)}
 
+@app.get("/api/geocode")
+def geocode(q: str):
+    import requests as req_lib
+    try:
+        res = req_lib.get(
+            f"https://nominatim.openstreetmap.org/search?q={q}&format=json&limit=5",
+            headers={"User-Agent": "SafeHerAI/1.0 (https://github.com/codebyraunak/safe-her-ai)"},
+            timeout=5
+        )
+        res.raise_for_status()
+        return res.json()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ── Route Scoring ──────────────────────────────────────────────────────────────
 
 @app.post("/api/route/score")
