@@ -138,8 +138,8 @@ def calculate_city_savings(num_zones: int = 100, hour: int = None) -> dict:
 
     for _ in range(num_zones):
         density = random.uniform(0, 1)
-        lat     = random.uniform(12.95, 12.99)
-        lng     = random.uniform(77.58, 77.61)
+        lat     = random.uniform(12.73, 13.15)
+        lng     = random.uniform(77.45, 77.80)
         status  = simulate_street_light_status(lat, lng)
 
         if not status["has_street_light"]:
