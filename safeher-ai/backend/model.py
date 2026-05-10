@@ -81,27 +81,42 @@ def predict_zone_risk(lat: float, lng: float, hour: int, day_of_week: int, light
     else:
         lighting_enc = int(LIGHTING_LE.transform([lighting])[0])
 
-    # Find nearest incident row by Euclidean distance on lat/lng
+    # Find k=5 nearest incident rows by Euclidean distance on lat/lng
+    k = 5
     dists = np.sqrt((DF["lat"] - lat) ** 2 + (DF["lng"] - lng) ** 2)
-    nearest = DF.loc[dists.idxmin()]
-    incident_enc = int(nearest["incident_enc"])
+    nearest_indices = dists.nsmallest(k).index
+    nearest_incident_encs = DF.loc[nearest_indices, "incident_enc"].values
 
-    features = pd.DataFrame(
-        [[incident_enc, hour, day_of_week, lighting_enc]],
-        columns=["incident_enc", "hour", "day_of_week", "lighting_enc"],
-    )
-    risk = int(MODEL.predict(features)[0])
-    proba = MODEL.predict_proba(features)[0]
+    features = pd.DataFrame({
+        "incident_enc": nearest_incident_encs,
+        "hour": [hour] * k,
+        "day_of_week": [day_of_week] * k,
+        "lighting_enc": [lighting_enc] * k
+    })
+    
+    predicted_risks = MODEL.predict(features)
+    predicted_probas = MODEL.predict_proba(features)
+    
+    # Apply Inverse Distance Weighting (IDW)
+    d_i = dists.loc[nearest_indices].values
+    w_i = 1.0 / (d_i**2 + 1e-6)
+    interpolated_risk = np.sum(w_i * predicted_risks) / np.sum(w_i)
+    
+    risk = int(round(interpolated_risk))
+    
+    # Calculate a weighted average confidence (optional but good for the UI)
+    max_probas = np.max(predicted_probas, axis=1)
+    proba = np.sum(w_i * max_probas) / np.sum(w_i)
 
     risk_idx = min(risk - 1, len(RISK_LABELS) - 1)
-    risk_idx = max(risk_idx, 0)  # FIX: Guard against risk_level = 0 causing index -1
+    risk_idx = max(risk_idx, 0)  # Guard against risk_level = 0 causing index -1
 
     return {
         "lat": lat,
         "lng": lng,
         "risk_level": risk,
         "risk_label": RISK_LABELS[risk_idx],
-        "confidence": round(float(max(proba)), 4),
+        "confidence": round(float(proba), 4),
         "hour": hour,
         "day_of_week": day_of_week,
         "lighting": lighting,
