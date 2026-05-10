@@ -16,16 +16,23 @@ export function useSafetyMonitor(userInfo, currentPos) {
   const [scMessage, setScMessage] = useState("");
 
   const handledSosRef = useRef({ sw: false, sc: false });
+  const intervalRef = useRef(null);
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    // Clear any existing interval first
+    if (intervalRef.current) clearInterval(intervalRef.current);
+
+    // Only run if either SafeWalk is active OR SmartCheck is pending
+    if (!swActive && scStatus !== "pending") return;
+
+    intervalRef.current = setInterval(() => {
       const now = new Date();
 
-      // SafeWalk Loop
+      // ── SafeWalk countdown ──
       if (swActive && swEtaTime) {
         const diff = Math.max(0, Math.floor((swEtaTime - now) / 1000));
         setSwTimeLeft(diff);
-        
+
         if (diff === 0 && !handledSosRef.current.sw) {
           handledSosRef.current.sw = true;
           if (userInfo && currentPos) {
@@ -39,9 +46,9 @@ export function useSafetyMonitor(userInfo, currentPos) {
         }
       }
 
-      // SmartCheck Loop
+      // ── SmartCheck countdown ──
       if (scStatus === "pending") {
-        setScCountdown(prev => {
+        setScCountdown((prev) => {
           if (prev <= 1 && !handledSosRef.current.sc) {
             handledSosRef.current.sc = true;
             setScStatus("alerted");
@@ -52,7 +59,7 @@ export function useSafetyMonitor(userInfo, currentPos) {
                 userInfo.user_id, userInfo.name,
                 "Smart Check failed: user did not confirm safe.",
                 userInfo.emergency_contact, userInfo.medical_details
-              ).then(res => setScResult(res)).catch(() => {});
+              ).then((res) => setScResult(res)).catch(() => {});
             }
             return 0;
           }
@@ -61,20 +68,21 @@ export function useSafetyMonitor(userInfo, currentPos) {
       }
     }, 1000);
 
-    return () => clearInterval(timer);
+    return () => clearInterval(intervalRef.current);
   }, [swActive, swEtaTime, scStatus, userInfo, currentPos, scTimerMinutes]);
 
   const globalConfirmSafe = () => {
-    // Cancels BOTH SafeWalk and SmartCheck
     setSwActive(false);
     setSwEtaTime(null);
     setSwTimeLeft(0);
-    
+    setSwDestination("");
+
     setScStatus("safe");
     setScMessage("You are marked safe. No alert was sent.");
     setScCountdown(scTimerMinutes * 60);
-    
+
     handledSosRef.current = { sw: false, sc: false };
+    if (intervalRef.current) clearInterval(intervalRef.current);
   };
 
   return {
@@ -86,10 +94,14 @@ export function useSafetyMonitor(userInfo, currentPos) {
       destination: swDestination,
       setDestination: setSwDestination,
       timeLeft: swTimeLeft,
+      setTimeLeft: setSwTimeLeft,   // ← exposed so SafeWalkPage can set initial value
     },
     sc: {
       status: scStatus,
-      setStatus: (st) => { setScStatus(st); if (st==="pending") handledSosRef.current.sc=false; },
+      setStatus: (st) => {
+        setScStatus(st);
+        if (st === "pending") handledSosRef.current.sc = false;
+      },
       countdown: scCountdown,
       setCountdown: setScCountdown,
       timerMinutes: scTimerMinutes,
@@ -99,6 +111,6 @@ export function useSafetyMonitor(userInfo, currentPos) {
       message: scMessage,
       setMessage: setScMessage,
     },
-    globalConfirmSafe
+    globalConfirmSafe,
   };
 }
