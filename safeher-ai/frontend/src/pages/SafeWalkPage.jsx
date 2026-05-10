@@ -57,7 +57,7 @@ useEffect(() => {
       lng,
       userInfo?.emergency_contact || ""
     );
-    sw.setEtaTime(new Date(res.eta));
+    sw.setEtaTime(new Date(Date.now() + etaMinutes * 60 * 1000));
     sw.setActive(true);
 
     // AUTO-LINK SMART CHECK: Start background smart check with 15 min default
