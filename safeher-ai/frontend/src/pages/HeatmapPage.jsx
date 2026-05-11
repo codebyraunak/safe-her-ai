@@ -1,59 +1,64 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import {
-  MapContainer, TileLayer, Circle, Popup,
+  MapContainer, TileLayer,
+  Circle, Popup,
   useMapEvents, CircleMarker, Polygon, useMap,
 } from "react-leaflet";
+import L from "leaflet";
+import "leaflet.heat";
 import {
   getHeatmap, getHotspots, getNearestHelper,
   reportDangerPin, getDangerPins, getSafeSpots, getIncidentHistory,
 } from "../api";
 import "leaflet/dist/leaflet.css";
 
-/* ── zoom-aware radius helper ── */
+/* ─────────────────────────────────────────────
+   Smooth gradient heat layer (replaces circles)
+───────────────────────────────────────────── */
+function HeatLayer({ points }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!points.length) return;
+
+    const heatPoints = points.map((pt) => [
+      pt.lat,
+      pt.lng,
+      pt.risk / 5, // normalize to 0–1
+    ]);
+
+    const heat = L.heatLayer(heatPoints, {
+      radius: 40,
+      blur: 35,
+      maxZoom: 17,
+      max: 1.0,
+      gradient: {
+        0.0:  "#1e40af", // deep blue   → very low risk
+        0.2:  "#3b82f6", // blue        → low
+        0.4:  "#22c55e", // green       → low-moderate
+        0.6:  "#f59e0b", // yellow      → moderate
+        0.75: "#f97316", // orange      → high
+        1.0:  "#ef4444", // red         → critical
+      },
+    });
+
+    heat.addTo(map);
+
+    return () => {
+      map.removeLayer(heat);
+    };
+  }, [points, map]);
+
+  return null;
+}
+
+/* ─────────────────────────────────────────────
+   Hotspot dashed rings (DBSCAN clusters)
+───────────────────────────────────────────── */
 function getRadius(zoom) {
-  // at zoom 14 → ~120m, at zoom 12 → ~400m, at zoom 16 → ~50m
   return Math.max(40, 120 * Math.pow(2, 14 - zoom));
 }
 
-/* ── re-renders circles when zoom changes ── */
-function ZoomAwareCircles({ points }) {
-  const map = useMap();
-  const [zoom, setZoom] = useState(map.getZoom());
-
-  useMapEvents({
-    zoomend() { setZoom(map.getZoom()); },
-  });
-
-  const radius = getRadius(zoom);
-
-  return (
-    <>
-      {points.map((pt, i) => (
-        <Circle
-          key={i}
-          center={[pt.lat, pt.lng]}
-          radius={radius}
-          pathOptions={{
-            color: RISK_COLORS[pt.risk] || "#94a3b8",
-            fillColor: RISK_COLORS[pt.risk] || "#94a3b8",
-            fillOpacity: RISK_OPACITY[pt.risk] || 0.25,
-            weight: 0,
-          }}
-        >
-          <Popup>
-            <div className="text-sm">
-              <strong>Risk Level:</strong> {pt.label}<br />
-              <strong>Score:</strong> {pt.risk}/5<br />
-              <strong>Coords:</strong> {pt.lat.toFixed(4)}, {pt.lng.toFixed(4)}
-            </div>
-          </Popup>
-        </Circle>
-      ))}
-    </>
-  );
-}
-
-/* ── hotspots only shown when zoomed out enough ── */
 function ZoomAwareHotspots({ hotspots }) {
   const map = useMap();
   const [zoom, setZoom] = useState(map.getZoom());
@@ -62,7 +67,7 @@ function ZoomAwareHotspots({ hotspots }) {
     zoomend() { setZoom(map.getZoom()); },
   });
 
-  if (zoom > 15) return null; // hide at very high zoom — individual points take over
+  if (zoom > 15) return null;
 
   const radius = getRadius(zoom) * 2.5;
 
@@ -95,20 +100,17 @@ function ZoomAwareHotspots({ hotspots }) {
   );
 }
 
+/* ─────────────────────────────────────────────
+   Map click handler
+───────────────────────────────────────────── */
 function MapClickHandler({ onClick }) {
   useMapEvents({ click(e) { onClick(e.latlng); } });
   return null;
 }
 
-const RISK_COLORS = {
-  1: "#22c55e",
-  2: "#84cc16",
-  3: "#f59e0b",
-  4: "#f97316",
-  5: "#ef4444",
-};
-const RISK_OPACITY = { 1: 0.2, 2: 0.25, 3: 0.35, 4: 0.45, 5: 0.55 };
-
+/* ─────────────────────────────────────────────
+   Constants
+───────────────────────────────────────────── */
 const DEFAULT_CENTER = [12.9716, 77.5946];
 
 const WORLD_BOUNDS = [[90, -180], [90, 180], [-90, 180], [-90, -180]];
@@ -119,6 +121,9 @@ const DATA_BOUNDS = [
   [DEFAULT_CENTER[0] + 0.08, DEFAULT_CENTER[1] - 0.08],
 ];
 
+/* ─────────────────────────────────────────────
+   Main Page
+───────────────────────────────────────────── */
 export default function HeatmapPage({ userInfo }) {
   const [points,        setPoints]        = useState([]);
   const [hotspots,      setHotspots]      = useState([]);
@@ -296,7 +301,13 @@ export default function HeatmapPage({ userInfo }) {
 
       {/* Legend */}
       <div className="flex gap-3 flex-wrap">
-        {[["Very Low","#22c55e"],["Low","#84cc16"],["Moderate","#f59e0b"],["High","#f97316"],["Critical","#ef4444"]].map(([label, color]) => (
+        {[
+          ["Very Low",  "#1e40af"],
+          ["Low",       "#3b82f6"],
+          ["Moderate",  "#f59e0b"],
+          ["High",      "#f97316"],
+          ["Critical",  "#ef4444"],
+        ].map(([label, color]) => (
           <div key={label} className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
             <span className="text-xs text-slate-400">{label}</span>
@@ -323,18 +334,22 @@ export default function HeatmapPage({ userInfo }) {
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             attribution='&copy; OpenStreetMap &copy; CartoDB'
           />
+
+          {/* Dim area outside the data bounds */}
           <Polygon
             positions={[WORLD_BOUNDS, DATA_BOUNDS]}
             pathOptions={{ color: "transparent", fillColor: "#0f172a", fillOpacity: 0.7 }}
           />
+
           <MapClickHandler onClick={handleMapClick} />
 
-          {/* ✅ Zoom-aware risk circles — radius shrinks as you zoom in */}
-          <ZoomAwareCircles points={points} />
+          {/* ✅ Smooth gradient heatmap layer */}
+          <HeatLayer points={points} />
 
-          {/* ✅ Hotspots hidden at high zoom to reduce clutter */}
+          {/* ✅ DBSCAN hotspot dashed rings */}
           <ZoomAwareHotspots hotspots={hotspots} />
 
+          {/* Danger pins */}
           {dangerPins.map((pin, i) => (
             <CircleMarker
               key={`pin-${i}`}
@@ -352,8 +367,11 @@ export default function HeatmapPage({ userInfo }) {
             </CircleMarker>
           ))}
 
+          {/* Safe spots */}
           {showSafeSpots && safeSpots.map((spot, i) => {
-            const color = spot.type === "hospital" ? "#22c55e" : spot.type === "24/7 shop" ? "#eab308" : "#3b82f6";
+            const color =
+              spot.type === "hospital"   ? "#22c55e" :
+              spot.type === "24/7 shop"  ? "#eab308" : "#3b82f6";
             return (
               <CircleMarker
                 key={`spot-${i}`}
@@ -373,7 +391,7 @@ export default function HeatmapPage({ userInfo }) {
           })}
         </MapContainer>
 
-        {/* Live Activity Feed — now inside relative parent so positioning works */}
+        {/* Live Activity Feed */}
         <div className="absolute top-4 right-4 z-[400] flex flex-col items-end">
           <button
             onClick={() => setShowFeed(!showFeed)}
@@ -405,10 +423,10 @@ export default function HeatmapPage({ userInfo }) {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "Total Zones",      value: points.length,                          color: "text-pink-400" },
-          { label: "High Risk Zones",  value: points.filter(p => p.risk >= 4).length, color: "text-red-400" },
-          { label: "DBSCAN Hotspots",  value: hotspots.length,                        color: "text-amber-400" },
-          { label: "Smart Check",      value: homeSaved ? "Ready" : "Setup required", color: homeSaved ? "text-emerald-400" : "text-slate-400" },
+          { label: "Total Zones",     value: points.length,                          color: "text-pink-400"    },
+          { label: "High Risk Zones", value: points.filter(p => p.risk >= 4).length, color: "text-red-400"     },
+          { label: "DBSCAN Hotspots", value: hotspots.length,                        color: "text-amber-400"   },
+          { label: "Smart Check",     value: homeSaved ? "Ready" : "Setup required", color: homeSaved ? "text-emerald-400" : "text-slate-400" },
         ].map(s => (
           <div key={s.label} className="bg-slate-800/60 rounded-xl p-4 border border-slate-700">
             <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
