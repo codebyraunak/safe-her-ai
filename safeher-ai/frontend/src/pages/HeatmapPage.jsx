@@ -1,37 +1,117 @@
-import { useEffect, useState, useCallback } from "react";
-import { MapContainer, TileLayer, Circle, Popup, useMapEvents, CircleMarker, Polygon } from "react-leaflet";
-import { getHeatmap, getHotspots, getNearestHelper, reportDangerPin, getDangerPins, getSafeSpots, getIncidentHistory } from "../api";
+import { useEffect, useState, useCallback, useRef } from "react";
+import {
+  MapContainer, TileLayer, Circle, Popup,
+  useMapEvents, CircleMarker, Polygon, useMap,
+} from "react-leaflet";
+import {
+  getHeatmap, getHotspots, getNearestHelper,
+  reportDangerPin, getDangerPins, getSafeSpots, getIncidentHistory,
+} from "../api";
 import "leaflet/dist/leaflet.css";
 
-function MapEvents({ onClick }) {
+/* ── zoom-aware radius helper ── */
+function getRadius(zoom) {
+  // at zoom 14 → ~120m, at zoom 12 → ~400m, at zoom 16 → ~50m
+  return Math.max(40, 120 * Math.pow(2, 14 - zoom));
+}
+
+/* ── re-renders circles when zoom changes ── */
+function ZoomAwareCircles({ points }) {
+  const map = useMap();
+  const [zoom, setZoom] = useState(map.getZoom());
+
   useMapEvents({
-    click(e) {
-      onClick(e.latlng);
-    },
+    zoomend() { setZoom(map.getZoom()); },
   });
+
+  const radius = getRadius(zoom);
+
+  return (
+    <>
+      {points.map((pt, i) => (
+        <Circle
+          key={i}
+          center={[pt.lat, pt.lng]}
+          radius={radius}
+          pathOptions={{
+            color: RISK_COLORS[pt.risk] || "#94a3b8",
+            fillColor: RISK_COLORS[pt.risk] || "#94a3b8",
+            fillOpacity: RISK_OPACITY[pt.risk] || 0.25,
+            weight: 0,
+          }}
+        >
+          <Popup>
+            <div className="text-sm">
+              <strong>Risk Level:</strong> {pt.label}<br />
+              <strong>Score:</strong> {pt.risk}/5<br />
+              <strong>Coords:</strong> {pt.lat.toFixed(4)}, {pt.lng.toFixed(4)}
+            </div>
+          </Popup>
+        </Circle>
+      ))}
+    </>
+  );
+}
+
+/* ── hotspots only shown when zoomed out enough ── */
+function ZoomAwareHotspots({ hotspots }) {
+  const map = useMap();
+  const [zoom, setZoom] = useState(map.getZoom());
+
+  useMapEvents({
+    zoomend() { setZoom(map.getZoom()); },
+  });
+
+  if (zoom > 15) return null; // hide at very high zoom — individual points take over
+
+  const radius = getRadius(zoom) * 2.5;
+
+  return (
+    <>
+      {hotspots.map((hs) => (
+        <Circle
+          key={hs.cluster_id}
+          center={[hs.center_lat, hs.center_lng]}
+          radius={radius}
+          pathOptions={{
+            color: "#f472b6",
+            fillColor: "#f472b6",
+            fillOpacity: 0.08,
+            weight: 1.5,
+            dashArray: "6",
+          }}
+        >
+          <Popup>
+            <div className="text-sm">
+              <strong>🔴 DBSCAN Hotspot</strong><br />
+              Incidents: {hs.incident_count}<br />
+              Avg Risk: {hs.avg_risk?.toFixed(1)}/5<br />
+              Type: {hs.dominant_type}
+            </div>
+          </Popup>
+        </Circle>
+      ))}
+    </>
+  );
+}
+
+function MapClickHandler({ onClick }) {
+  useMapEvents({ click(e) { onClick(e.latlng); } });
   return null;
 }
 
-
 const RISK_COLORS = {
-  1: "#22c55e",  // Very Low - green
-  2: "#84cc16",  // Low - lime
-  3: "#f59e0b",  // Moderate - amber
-  4: "#f97316",  // High - orange
-  5: "#ef4444",  // Critical - red
+  1: "#22c55e",
+  2: "#84cc16",
+  3: "#f59e0b",
+  4: "#f97316",
+  5: "#ef4444",
 };
+const RISK_OPACITY = { 1: 0.2, 2: 0.25, 3: 0.35, 4: 0.45, 5: 0.55 };
 
-const RISK_OPACITY = { 1: 0.25, 2: 0.3, 3: 0.4, 4: 0.5, 5: 0.6 };
-
-// Bengaluru center
 const DEFAULT_CENTER = [12.9716, 77.5946];
 
-const WORLD_BOUNDS = [
-  [90, -180],
-  [90, 180],
-  [-90, 180],
-  [-90, -180],
-];
+const WORLD_BOUNDS = [[90, -180], [90, 180], [-90, 180], [-90, -180]];
 const DATA_BOUNDS = [
   [DEFAULT_CENTER[0] - 0.08, DEFAULT_CENTER[1] - 0.08],
   [DEFAULT_CENTER[0] - 0.08, DEFAULT_CENTER[1] + 0.08],
@@ -40,26 +120,24 @@ const DATA_BOUNDS = [
 ];
 
 export default function HeatmapPage({ userInfo }) {
-  const [points,   setPoints]   = useState([]);
-  const [hotspots, setHotspots] = useState([]);
-  const [selectedHour, setSelectedHour] = useState(new Date().getHours());
-  const [appliedHour, setAppliedHour] = useState(new Date().getHours());
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState("");
-  const [currentPos, setCurrentPos] = useState(null);
+  const [points,        setPoints]        = useState([]);
+  const [hotspots,      setHotspots]      = useState([]);
+  const [selectedHour,  setSelectedHour]  = useState(new Date().getHours());
+  const [appliedHour,   setAppliedHour]   = useState(new Date().getHours());
+  const [currentTime,   setCurrentTime]   = useState(new Date());
+  const [loading,       setLoading]       = useState(false);
+  const [error,         setError]         = useState("");
+  const [currentPos,    setCurrentPos]    = useState(null);
   const [nearestHelper, setNearestHelper] = useState(null);
-  const [homeSaved, setHomeSaved] = useState(false);
-  const [dangerPins, setDangerPins] = useState([]);
-  const [reportModal, setReportModal] = useState({ open: false, lat: null, lng: null });
-  const [reportType, setReportType] = useState("Harassment");
-  const [reportDesc, setReportDesc] = useState("");
+  const [homeSaved,     setHomeSaved]     = useState(false);
+  const [dangerPins,    setDangerPins]    = useState([]);
+  const [reportModal,   setReportModal]   = useState({ open: false, lat: null, lng: null });
+  const [reportType,    setReportType]    = useState("Harassment");
+  const [reportDesc,    setReportDesc]    = useState("");
   const [showSafeSpots, setShowSafeSpots] = useState(false);
-  const [safeSpots, setSafeSpots] = useState([]);
-  const [incidents, setIncidents] = useState([]);
-  const [showFeed, setShowFeed] = useState(false);
-
-
+  const [safeSpots,     setSafeSpots]     = useState([]);
+  const [incidents,     setIncidents]     = useState([]);
+  const [showFeed,      setShowFeed]      = useState(false);
 
   const fetchHeatmap = useCallback(async () => {
     setLoading(true);
@@ -75,24 +153,18 @@ export default function HeatmapPage({ userInfo }) {
       setHotspots(hs.clusters || []);
       setDangerPins(dp || []);
       setIncidents(inc.incidents || []);
-    } catch (e) {
+    } catch {
       setError("Could not load heatmap. Is the backend running?");
     } finally {
       setLoading(false);
     }
   }, [appliedHour]);
 
-
-
   useEffect(() => { fetchHeatmap(); }, [fetchHeatmap]);
+  useEffect(() => { setHomeSaved(Boolean(localStorage.getItem("safeher_home_location"))); }, []);
 
-  useEffect(() => {
-    setHomeSaved(Boolean(localStorage.getItem("safeher_home_location")));
-  }, []);
-
-  const currentHour = currentTime.getHours();
+  const currentHour      = currentTime.getHours();
   const currentTimeLabel = currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  const periodLabel = currentHour < 6 ? "Night" : currentHour < 12 ? "Morning" : currentHour < 18 ? "Afternoon" : "Evening";
   const previewButtonLabel = selectedHour === appliedHour ? "Refresh current hour" : "Preview selected hour";
 
   useEffect(() => {
@@ -133,7 +205,7 @@ export default function HeatmapPage({ userInfo }) {
       setReportModal({ open: false, lat: null, lng: null });
       setReportDesc("");
       fetchHeatmap();
-    } catch (err) {
+    } catch {
       alert("Failed to report danger pin.");
     }
   };
@@ -146,7 +218,7 @@ export default function HeatmapPage({ userInfo }) {
       try {
         const res = await getSafeSpots(DEFAULT_CENTER[0], DEFAULT_CENTER[1], 4000);
         setSafeSpots(res.spots || []);
-      } catch (err) {
+      } catch {
         alert("Failed to load safe spots");
       } finally {
         setLoading(false);
@@ -154,15 +226,13 @@ export default function HeatmapPage({ userInfo }) {
     }
   };
 
-
-
   return (
     <div className="flex flex-col h-full gap-4">
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Safety Heatmap</h1>
-          <p className="text-sm text-slate-400">AI-predicted risk zones for women — updated in real time</p>
+          <p className="text-sm text-slate-400">AI-predicted risk zones — updated in real time</p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-[1.4fr_0.9fr] items-center rounded-3xl border border-slate-700/80 bg-slate-900/70 p-4 shadow-xl shadow-slate-950/30">
@@ -176,23 +246,15 @@ export default function HeatmapPage({ userInfo }) {
                 Selected: {String(selectedHour).padStart(2, "0")}:00
               </div>
             </div>
-
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs text-slate-500">
-                <span>Early</span>
-                <span>Late</span>
+                <span>Early</span><span>Late</span>
               </div>
-              <div className="relative flex items-center gap-3">
-                <input
-                  type="range"
-                  min={0}
-                  max={23}
-                  value={selectedHour}
-                  onChange={(e) => setSelectedHour(Number(e.target.value))}
-                  className="h-2 w-full appearance-none rounded-full bg-white/10 accent-pink-500 outline-none transition duration-200 hover:bg-white/20"
-                />
-                <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 pointer-events-none bg-gradient-to-r from-pink-500/20 via-transparent to-slate-400/10 rounded-full h-2" />
-              </div>
+              <input
+                type="range" min={0} max={23} value={selectedHour}
+                onChange={(e) => setSelectedHour(Number(e.target.value))}
+                className="h-2 w-full appearance-none rounded-full bg-white/10 accent-pink-500 outline-none transition duration-200 hover:bg-white/20"
+              />
               <p className="text-xs text-slate-500">Current data is shown automatically; use the slider to preview a different hour.</p>
             </div>
           </div>
@@ -202,7 +264,9 @@ export default function HeatmapPage({ userInfo }) {
               <p className="text-xs text-slate-400 uppercase tracking-[0.16em]">Current time</p>
               <p className="text-4xl font-bold text-white mt-3">{currentTimeLabel}</p>
               <p className="text-xs text-slate-500 mt-3 uppercase tracking-[0.16em]">Displayed data hour</p>
-              <p className="text-xl font-semibold text-pink-300 mt-1">{String(appliedHour).padStart(2, "0")}:00 {appliedHour === currentHour ? "(Live)" : "(Preview)"}</p>
+              <p className="text-xl font-semibold text-pink-300 mt-1">
+                {String(appliedHour).padStart(2, "0")}:00 {appliedHour === currentHour ? "(Live)" : "(Preview)"}
+              </p>
             </div>
             <button
               onClick={() => setAppliedHour(selectedHour)}
@@ -252,9 +316,8 @@ export default function HeatmapPage({ userInfo }) {
         </div>
       </div>
 
-
       {/* Map */}
-      <div className="flex-1 rounded-2xl overflow-hidden border border-slate-700 min-h-[420px]">
+      <div className="relative flex-1 rounded-2xl overflow-hidden border border-slate-700 min-h-[420px]">
         <MapContainer center={DEFAULT_CENTER} zoom={14} style={{ height: "100%", width: "100%" }}>
           <TileLayer
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
@@ -264,45 +327,14 @@ export default function HeatmapPage({ userInfo }) {
             positions={[WORLD_BOUNDS, DATA_BOUNDS]}
             pathOptions={{ color: "transparent", fillColor: "#0f172a", fillOpacity: 0.7 }}
           />
-          <MapEvents onClick={handleMapClick} />
-          {points.map((pt, i) => (
-            <Circle
-              key={i}
-              center={[pt.lat, pt.lng]}
-              radius={550}
-              pathOptions={{
-                color: RISK_COLORS[pt.risk] || "#94a3b8",
-                fillColor: RISK_COLORS[pt.risk] || "#94a3b8",
-                fillOpacity: RISK_OPACITY[pt.risk] || 0.3,
-                weight: 0,
-              }}
-            >
-              <Popup>
-                <div className="text-sm">
-                  <strong>Risk Level:</strong> {pt.label}<br />
-                  <strong>Score:</strong> {pt.risk}/5<br />
-                  <strong>Coords:</strong> {pt.lat}, {pt.lng}
-                </div>
-              </Popup>
-            </Circle>
-          ))}
-          {hotspots.map((hs) => (
-            <Circle
-              key={hs.cluster_id}
-              center={[hs.center_lat, hs.center_lng]}
-              radius={400}
-              pathOptions={{ color: "#f472b6", fillColor: "#f472b6", fillOpacity: 0.15, weight: 2, dashArray: "6" }}
-            >
-              <Popup>
-                <div className="text-sm">
-                  <strong>🔴 DBSCAN Hotspot</strong><br />
-                  Incidents: {hs.incident_count}<br />
-                  Avg Risk: {hs.avg_risk?.toFixed(1)}/5<br />
-                  Type: {hs.dominant_type}
-                </div>
-              </Popup>
-            </Circle>
-          ))}
+          <MapClickHandler onClick={handleMapClick} />
+
+          {/* ✅ Zoom-aware risk circles — radius shrinks as you zoom in */}
+          <ZoomAwareCircles points={points} />
+
+          {/* ✅ Hotspots hidden at high zoom to reduce clutter */}
+          <ZoomAwareHotspots hotspots={hotspots} />
+
           {dangerPins.map((pin, i) => (
             <CircleMarker
               key={`pin-${i}`}
@@ -319,10 +351,9 @@ export default function HeatmapPage({ userInfo }) {
               </Popup>
             </CircleMarker>
           ))}
+
           {showSafeSpots && safeSpots.map((spot, i) => {
-            let color = "#3b82f6"; // blue - police
-            if (spot.type === "hospital") color = "#22c55e"; // green
-            if (spot.type === "24/7 shop") color = "#eab308"; // yellow
+            const color = spot.type === "hospital" ? "#22c55e" : spot.type === "24/7 shop" ? "#eab308" : "#3b82f6";
             return (
               <CircleMarker
                 key={`spot-${i}`}
@@ -341,8 +372,8 @@ export default function HeatmapPage({ userInfo }) {
             );
           })}
         </MapContainer>
-        
-        {/* Incident History Feed Overlay */}
+
+        {/* Live Activity Feed — now inside relative parent so positioning works */}
         <div className="absolute top-4 right-4 z-[400] flex flex-col items-end">
           <button
             onClick={() => setShowFeed(!showFeed)}
@@ -350,7 +381,6 @@ export default function HeatmapPage({ userInfo }) {
           >
             {showFeed ? "Hide Activity Feed" : "Live Activity Feed 🔔"}
           </button>
-          
           {showFeed && (
             <div className="w-80 max-h-96 overflow-y-auto rounded-2xl bg-slate-900/95 border border-slate-700 shadow-2xl backdrop-blur-xl p-4 flex flex-col gap-3">
               <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-1 sticky top-0 bg-slate-900/95 pb-2">
@@ -375,10 +405,10 @@ export default function HeatmapPage({ userInfo }) {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "Total Zones", value: points.length, color: "text-pink-400" },
-          { label: "High Risk Zones", value: points.filter(p => p.risk >= 4).length, color: "text-red-400" },
-          { label: "DBSCAN Hotspots", value: hotspots.length, color: "text-amber-400" },
-          { label: "Smart Check", value: homeSaved ? "Ready" : "Setup required", color: homeSaved ? "text-emerald-400" : "text-slate-400" },
+          { label: "Total Zones",      value: points.length,                          color: "text-pink-400" },
+          { label: "High Risk Zones",  value: points.filter(p => p.risk >= 4).length, color: "text-red-400" },
+          { label: "DBSCAN Hotspots",  value: hotspots.length,                        color: "text-amber-400" },
+          { label: "Smart Check",      value: homeSaved ? "Ready" : "Setup required", color: homeSaved ? "text-emerald-400" : "text-slate-400" },
         ].map(s => (
           <div key={s.label} className="bg-slate-800/60 rounded-xl p-4 border border-slate-700">
             <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
@@ -393,7 +423,7 @@ export default function HeatmapPage({ userInfo }) {
           <p className="text-2xl font-bold text-white mt-2">
             {nearestHelper ? `${nearestHelper.name} (${nearestHelper.distance_km} km)` : "No helper nearby"}
           </p>
-          <p className="text-xs text-slate-500 mt-2">This app will try to route your emergency to the closest other user available.</p>
+          <p className="text-xs text-slate-500 mt-2">Routes your emergency to the closest available user.</p>
         </div>
       </div>
 
@@ -451,4 +481,3 @@ export default function HeatmapPage({ userInfo }) {
     </div>
   );
 }
-
