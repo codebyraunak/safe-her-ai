@@ -5,7 +5,6 @@ import {
   useMapEvents, CircleMarker, Polygon, useMap,
 } from "react-leaflet";
 import L from "leaflet";
-import "leaflet.heat";
 import {
   getHeatmap, getHotspots, getNearestHelper,
   reportDangerPin, getDangerPins, getSafeSpots, getIncidentHistory,
@@ -21,31 +20,41 @@ function HeatLayer({ points }) {
   useEffect(() => {
     if (!points.length) return;
 
-    const heatPoints = points.map((pt) => [
-      pt.lat,
-      pt.lng,
-      pt.risk / 5, // normalize to 0–1
-    ]);
+    const initHeat = async () => {
+      await import("leaflet.heat");
 
-    const heat = L.heatLayer(heatPoints, {
-      radius: 40,
-      blur: 35,
-      maxZoom: 17,
-      max: 1.0,
-      gradient: {
-        0.0:  "#1e40af", // deep blue   → very low risk
-        0.2:  "#3b82f6", // blue        → low
-        0.4:  "#22c55e", // green       → low-moderate
-        0.6:  "#f59e0b", // yellow      → moderate
-        0.75: "#f97316", // orange      → high
-        1.0:  "#ef4444", // red         → critical
-      },
+      const heatPoints = points.map((pt) => [
+        pt.lat,
+        pt.lng,
+        pt.risk / 5, // normalize to 0–1
+      ]);
+
+      const heat = L.heatLayer(heatPoints, {
+        radius: 40,
+        blur: 35,
+        maxZoom: 17,
+        max: 1.0,
+        gradient: {
+          0.0:  "#1e40af", // deep blue   → very low risk
+          0.2:  "#3b82f6", // blue        → low
+          0.4:  "#22c55e", // green       → low-moderate
+          0.6:  "#f59e0b", // yellow      → moderate
+          0.75: "#f97316", // orange      → high
+          1.0:  "#ef4444", // red         → critical
+        },
+      });
+
+      heat.addTo(map);
+      return heat;
+    };
+
+    let heatRef;
+    initHeat().then((heat) => {
+      heatRef = heat;
     });
 
-    heat.addTo(map);
-
     return () => {
-      map.removeLayer(heat);
+      if (heatRef) map.removeLayer(heatRef);
     };
   }, [points, map]);
 
