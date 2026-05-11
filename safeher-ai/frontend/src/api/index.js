@@ -1,14 +1,22 @@
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_TIMEOUT_MS = 30000;
 
 const api = async (path, method = "GET", body = null) => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
   const opts = {
     method,
     headers: { "Content-Type": "application/json" },
+    signal: controller.signal,
   };
   if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(`${BASE_URL}${path}`, opts);
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
-  return res.json();
+  try {
+    const res = await fetch(`${BASE_URL}${path}`, opts);
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    return res.json();
+  } finally {
+    clearTimeout(timeout);
+  }
 };
 
 export const getHeatmap = (center_lat, center_lng, hour, day_of_week) =>

@@ -1,5 +1,13 @@
 import random
 from datetime import datetime
+import requests
+
+OVERPASS_URLS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass.openstreetmap.ru/api/interpreter",
+]
+ROAD_TYPES = "primary|secondary|tertiary|residential|service|unclassified|living_street"
 
 # ── Traffic density simulation ────────────────────────────────────────────────
 # In production: replace with TomTom / Google Maps traffic API
@@ -112,19 +120,110 @@ def get_zone_lighting(lat: float, lng: float, hour: int = None, is_emergency: bo
 
 # ── Lighting map for an area ──────────────────────────────────────────────────
 
+def get_segment_lighting(lat: float, lng: float, hour: int = None) -> dict:
+    zone = get_zone_lighting(lat, lng, hour)
+    if not zone["has_street_light"]:
+        status = "No Street Light"
+    elif not zone["is_working"]:
+        status = "Not Working"
+    else:
+        status = "Working"
+
+    return {
+        "status": status,
+        "brightness_pct": zone["brightness_pct"],
+        "traffic_density": zone["traffic_density"],
+        "density_label": zone["density_label"],
+        "mode_desc": zone["mode_desc"],
+    }
+
+def fetch_osm_road_segments(center_lat: float, center_lng: float, hour: int = None, radius_m: int = 4200) -> list:
+    query = f"""
+    [out:json][timeout:12];
+    way(around:{radius_m},{center_lat},{center_lng})["highway"~"{ROAD_TYPES}"];
+    out geom;
+    """
+    headers = {"User-Agent": "SafeHerAI/1.0"}
+    last_error = None
+    response = None
+    for url in OVERPASS_URLS:
+        try:
+            response = requests.post(url, data={"data": query}, headers=headers, timeout=18)
+            response.raise_for_status()
+            break
+        except Exception as exc:
+            last_error = exc
+            response = None
+
+    if response is None:
+        raise last_error
+
+    segments = []
+    for way in response.json().get("elements", []):
+        geometry = way.get("geometry", [])
+        if len(geometry) < 2:
+            continue
+
+        coords = [[round(point["lat"], 6), round(point["lon"], 6)] for point in geometry]
+        mid = coords[len(coords) // 2]
+        lighting = get_segment_lighting(mid[0], mid[1], hour)
+        segments.append({
+            "id": way.get("id"),
+            "name": way.get("tags", {}).get("name") or "Unnamed street",
+            "road_type": way.get("tags", {}).get("highway"),
+            "coords": coords,
+            **lighting,
+        })
+
+    return segments[:650]
+
+def generate_demo_street_grid(center_lat: float, center_lng: float, hour: int = None) -> list:
+    offsets = [x / 10000 for x in range(-240, 241, 30)]
+    segments = []
+
+    def add_segment(start_lat, start_lng, end_lat, end_lng):
+        mid_lat = round((start_lat + end_lat) / 2, 6)
+        mid_lng = round((start_lng + end_lng) / 2, 6)
+        lighting = get_segment_lighting(mid_lat, mid_lng, hour)
+        segments.append({
+            "id": f"grid-{len(segments)}",
+            "name": "Demo lighting corridor",
+            "road_type": "demo_grid",
+            "coords": [
+                [round(start_lat, 6), round(start_lng, 6)],
+                [round(end_lat, 6), round(end_lng, 6)],
+            ],
+            **lighting,
+        })
+
+    for dlat in offsets:
+      for index, dlng in enumerate(offsets[:-1]):
+          add_segment(
+              center_lat + dlat,
+              center_lng + dlng,
+              center_lat + dlat,
+              center_lng + offsets[index + 1],
+          )
+
+    for dlng in offsets:
+      for index, dlat in enumerate(offsets[:-1]):
+          add_segment(
+              center_lat + dlat,
+              center_lng + dlng,
+              center_lat + offsets[index + 1],
+              center_lng + dlng,
+          )
+
+    return segments
+
 def generate_lighting_map(center_lat: float, center_lng: float, hour: int = None) -> list:
-    # FIX: Removed unused `import numpy as np` inside the function
     if hour is None:
         hour = datetime.now().hour
 
-    zones = []
-    for dlat in [x / 1000 for x in range(-15, 16, 5)]:
-        for dlng in [x / 1000 for x in range(-15, 16, 5)]:
-            lat  = round(center_lat + dlat, 5)
-            lng  = round(center_lng + dlng, 5)
-            zone = get_zone_lighting(lat, lng, hour)
-            zones.append(zone)
-    return zones
+    segments = fetch_osm_road_segments(center_lat, center_lng, hour)
+    if not segments:
+        raise RuntimeError("No street geometry found for this area.")
+    return segments
 
 # ── City-wide energy savings estimate ────────────────────────────────────────
 

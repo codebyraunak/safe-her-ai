@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import {
   MapContainer, TileLayer,
   Circle, Popup,
-  useMapEvents, CircleMarker, Polygon, useMap,
+  useMapEvents, CircleMarker, Rectangle, useMap,
 } from "react-leaflet";
 import L from "leaflet";
 import {
@@ -10,6 +10,22 @@ import {
   reportDangerPin, getDangerPins, getSafeSpots, getIncidentHistory,
 } from "../api";
 import "leaflet/dist/leaflet.css";
+
+const RISK_COLORS = {
+  1: "#2563eb",
+  2: "#22c55e",
+  3: "#f59e0b",
+  4: "#f97316",
+  5: "#ef4444",
+};
+
+const RISK_FILL_OPACITY = {
+  1: 0.28,
+  2: 0.28,
+  3: 0.34,
+  4: 0.38,
+  5: 0.44,
+};
 
 /* ─────────────────────────────────────────────
    Smooth gradient heat layer (replaces circles)
@@ -30,10 +46,11 @@ function HeatLayer({ points }) {
       ]);
 
       const heat = L.heatLayer(heatPoints, {
-        radius: 40,
-        blur: 35,
+        radius: 68,
+        blur: 26,
+        minOpacity: 0.36,
         maxZoom: 17,
-        max: 1.0,
+        max: 0.85,
         gradient: {
           0.0:  "#1e40af", // deep blue   → very low risk
           0.2:  "#3b82f6", // blue        → low
@@ -49,16 +66,63 @@ function HeatLayer({ points }) {
     };
 
     let heatRef;
+    let disposed = false;
     initHeat().then((heat) => {
+      if (disposed) {
+        map.removeLayer(heat);
+        return;
+      }
       heatRef = heat;
     });
 
     return () => {
+      disposed = true;
       if (heatRef) map.removeLayer(heatRef);
     };
   }, [points, map]);
 
   return null;
+}
+
+/* ─────────────────────────────────────────────
+   Visible colored risk zones across data area
+───────────────────────────────────────────── */
+function RiskAreaLayer({ points }) {
+  const getCellSize = (values, fallback) => {
+    const unique = [...new Set(values.map((value) => Number(value.toFixed(5))))].sort((a, b) => a - b);
+    const gaps = unique
+      .slice(1)
+      .map((value, i) => value - unique[i])
+      .filter((gap) => gap > 0.0001);
+    return gaps.length ? Math.min(...gaps) * 1.08 : fallback;
+  };
+
+  const latSize = getCellSize(points.map((pt) => pt.lat), 0.006);
+  const lngSize = getCellSize(points.map((pt) => pt.lng), 0.006);
+
+  return (
+    <>
+      {points.map((pt, i) => {
+        const color = RISK_COLORS[pt.risk] || "#64748b";
+        return (
+          <Rectangle
+            key={`risk-zone-${i}`}
+            bounds={[
+              [pt.lat - latSize / 2, pt.lng - lngSize / 2],
+              [pt.lat + latSize / 2, pt.lng + lngSize / 2],
+            ]}
+            pathOptions={{
+              color,
+              fillColor: color,
+              fillOpacity: RISK_FILL_OPACITY[pt.risk] || 0.28,
+              opacity: 0,
+              weight: 0,
+            }}
+          />
+        );
+      })}
+    </>
+  );
 }
 
 /* ─────────────────────────────────────────────
@@ -122,7 +186,6 @@ function MapClickHandler({ onClick }) {
 ───────────────────────────────────────────── */
 const DEFAULT_CENTER = [12.9716, 77.5946];
 
-const WORLD_BOUNDS = [[90, -180], [90, 180], [-90, 180], [-90, -180]];
 const DATA_BOUNDS = [
   [DEFAULT_CENTER[0] - 0.08, DEFAULT_CENTER[1] - 0.08],
   [DEFAULT_CENTER[0] - 0.08, DEFAULT_CENTER[1] + 0.08],
@@ -338,19 +401,35 @@ export default function HeatmapPage({ userInfo }) {
 
       {/* Map */}
       <div className="relative flex-1 rounded-2xl overflow-hidden border border-slate-700 min-h-[420px]">
-        <MapContainer center={DEFAULT_CENTER} zoom={14} style={{ height: "100%", width: "100%" }}>
+        <MapContainer
+          center={DEFAULT_CENTER}
+          zoom={14}
+          maxBounds={DATA_BOUNDS}
+          maxBoundsViscosity={1}
+          style={{ height: "100%", width: "100%" }}
+        >
           <TileLayer
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             attribution='&copy; OpenStreetMap &copy; CartoDB'
+            opacity={0.82}
           />
 
-          {/* Dim area outside the data bounds */}
-          <Polygon
-            positions={[WORLD_BOUNDS, DATA_BOUNDS]}
-            pathOptions={{ color: "transparent", fillColor: "#0f172a", fillOpacity: 0.7 }}
+          {/* Grey base for the available data area before risk colors load */}
+          <Rectangle
+            bounds={DATA_BOUNDS}
+            pathOptions={{
+              color: "transparent",
+              fillColor: "#475569",
+              fillOpacity: 0.28,
+              weight: 0,
+            }}
+            interactive={false}
           />
 
           <MapClickHandler onClick={handleMapClick} />
+
+          {/* ✅ Clear colored risk regions across the data area */}
+          <RiskAreaLayer points={points} />
 
           {/* ✅ Smooth gradient heatmap layer */}
           <HeatLayer points={points} />

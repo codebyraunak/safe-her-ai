@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Circle, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Polyline, Popup, useMap } from "react-leaflet";
 
 function RecenterMap({ center }) {
   const map = useMap();
@@ -25,6 +25,72 @@ const getStatusColor = (zone) => {
   return STATUS_COLORS.Working;
 };
 
+const getStatusLabel = (zone) => {
+  if (zone.status) return zone.status;
+  if (!zone.has_street_light) return "No Street Light";
+  if (!zone.is_working) return "Not Working";
+  return "Working";
+};
+
+const getSegmentStatus = (start, end) => {
+  const labels = [getStatusLabel(start), getStatusLabel(end)];
+  if (labels.includes("No Street Light")) return "No Street Light";
+  if (labels.includes("Not Working")) return "Not Working";
+  return "Working";
+};
+
+const getGridStep = (zones, key) => {
+  const values = [...new Set(zones.map((zone) => Number(zone[key].toFixed(5))))].sort((a, b) => a - b);
+  const gaps = values
+    .slice(1)
+    .map((value, i) => Number((value - values[i]).toFixed(5)))
+    .filter((gap) => gap > 0);
+  return gaps.length ? Math.min(...gaps) : 0.005;
+};
+
+const buildLightingSegments = (zones) => {
+  if (zones.some((zone) => Array.isArray(zone.coords))) {
+    return zones
+      .filter((zone) => Array.isArray(zone.coords) && zone.coords.length > 1)
+      .map((zone, i) => ({
+        id: zone.id || `road-${i}`,
+        positions: zone.coords,
+        status: zone.status || getStatusLabel(zone),
+        brightness: zone.brightness_pct ?? 0,
+        density: Math.round((zone.traffic_density || 0) * 100),
+        mode: zone.mode_desc || zone.road_type || "Street segment",
+        name: zone.name || "Unnamed street",
+      }));
+  }
+
+  const latStep = getGridStep(zones, "lat");
+  const lngStep = getGridStep(zones, "lng");
+  const byCoord = new Map(zones.map((zone) => [`${zone.lat.toFixed(5)},${zone.lng.toFixed(5)}`, zone]));
+  const segments = [];
+
+  zones.forEach((zone) => {
+    [
+      [0, lngStep],
+      [latStep, 0],
+    ].forEach(([dLat, dLng]) => {
+      const next = byCoord.get(`${(zone.lat + dLat).toFixed(5)},${(zone.lng + dLng).toFixed(5)}`);
+      if (!next) return;
+
+      const status = getSegmentStatus(zone, next);
+      segments.push({
+        id: `${zone.lat}-${zone.lng}-${next.lat}-${next.lng}`,
+        positions: [[zone.lat, zone.lng], [next.lat, next.lng]],
+        status,
+        brightness: Math.round((zone.brightness_pct + next.brightness_pct) / 2),
+        density: Math.round(((zone.traffic_density + next.traffic_density) / 2) * 100),
+        mode: status === "Working" ? zone.mode_desc : status,
+      });
+    });
+  });
+
+  return segments;
+};
+
 export default function LightingPage() {
   const [center,   setCenter]   = useState(DEFAULT_CENTER);
   const [zones,    setZones]    = useState([]);
@@ -33,6 +99,7 @@ export default function LightingPage() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState("");
+  const lightingSegments = buildLightingSegments(zones);
 
   // Try to get real location
   useEffect(() => {
@@ -48,10 +115,8 @@ export default function LightingPage() {
     setLoading(true);
     setError("");
     try {
-      const [lm, sv] = await Promise.all([
-        getLightingMap(center[0], center[1], hour),
-        getLightingSavings(49),
-      ]);
+      const lm = await getLightingMap(center[0], center[1], hour);
+      const sv = await getLightingSavings(lm.total || lm.zones?.length || 100);
       setZones(lm.zones || []);
       setSavings(sv);
     } catch {
@@ -133,7 +198,7 @@ export default function LightingPage() {
       <div className="flex gap-3 flex-wrap">
         {Object.entries(STATUS_COLORS).map(([status, color]) => (
           <div key={status} className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
+            <div className="h-1.5 w-8 rounded-full" style={{ backgroundColor: color }} />
             <span className="text-xs text-slate-400">{status}</span>
           </div>
         ))}
@@ -162,28 +227,27 @@ export default function LightingPage() {
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             attribution='&copy; OpenStreetMap &copy; CartoDB'
           />
-          {zones.map((z, i) => (
-            <Circle
-              key={i}
-              center={[z.lat, z.lng]}
-              radius={180}
+          {lightingSegments.map((segment) => (
+            <Polyline
+              key={segment.id}
+              positions={segment.positions}
               pathOptions={{
-                color: getStatusColor(z),
-                fillColor: getStatusColor(z),
-                fillOpacity: 0.35,
-                weight: 0,
+                color: STATUS_COLORS[segment.status],
+                opacity: segment.status === "No Street Light" ? 0.72 : 0.9,
+                weight: segment.status === "No Street Light" ? 5 : 7,
+                lineCap: "round",
               }}
             >
               <Popup>
                 <div className="text-sm">
-                  <strong>Street Light:</strong> {z.has_street_light ? "Yes" : "No"}<br />
-                  <strong>Status:</strong> {z.has_street_light ? (z.is_working ? "Working" : "Broken") : "No Street Light"}<br />
-                  <strong>Brightness:</strong> {z.brightness_pct}%<br />
-                  <strong>Traffic:</strong> {z.density_label} ({(z.traffic_density * 100).toFixed(0)}%)<br />
-                  <em className="text-xs">{z.mode_desc}</em>
+                  <strong>Street segment:</strong> {segment.status}<br />
+                  <strong>Road:</strong> {segment.name}<br />
+                  <strong>Brightness:</strong> {segment.brightness}%<br />
+                  <strong>Traffic:</strong> {segment.density}%<br />
+                  <em className="text-xs">{segment.mode}</em>
                 </div>
               </Popup>
-            </Circle>
+            </Polyline>
           ))}
         </MapContainer>
       </div>

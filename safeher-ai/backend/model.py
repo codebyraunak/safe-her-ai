@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import LabelEncoder
+from scipy.spatial import cKDTree
 import os
 from functools import lru_cache
 
@@ -46,6 +47,9 @@ MODEL, DF, INCIDENT_LE, LIGHTING_LE = load_and_train()
 
 RISK_LABELS = ["Very Low", "Low", "Moderate", "High", "Critical"]
 
+# ── Build KDTree for fast spatial queries ──────────────────────────────────────
+KDTREE_COORDS = cKDTree(DF[["lat", "lng"]].values)
+
 # ── DBSCAN hotspot clustering ─────────────────────────────────────────────────
 
 def get_hotspot_clusters():
@@ -81,11 +85,10 @@ def predict_zone_risk(lat: float, lng: float, hour: int, day_of_week: int, light
     else:
         lighting_enc = int(LIGHTING_LE.transform([lighting])[0])
 
-    # Find k=5 nearest incident rows by Euclidean distance on lat/lng
+    # OPTIMIZED: Use KDTree for O(log n) nearest-neighbor lookup instead of O(n)
     k = 5
-    dists = np.sqrt((DF["lat"] - lat) ** 2 + (DF["lng"] - lng) ** 2)
-    nearest_indices = dists.nsmallest(k).index
-    nearest_incident_encs = DF.loc[nearest_indices, "incident_enc"].values
+    dists, indices = KDTREE_COORDS.query([lat, lng], k=k)
+    nearest_incident_encs = DF.iloc[indices]["incident_enc"].values
 
     features = pd.DataFrame({
         "incident_enc": nearest_incident_encs,
@@ -98,7 +101,7 @@ def predict_zone_risk(lat: float, lng: float, hour: int, day_of_week: int, light
     predicted_probas = MODEL.predict_proba(features)
     
     # Apply Inverse Distance Weighting (IDW)
-    d_i = dists.loc[nearest_indices].values
+    d_i = dists
     w_i = 1.0 / (d_i**2 + 1e-6)
     interpolated_risk = np.sum(w_i * predicted_risks) / np.sum(w_i)
     
@@ -124,7 +127,14 @@ def predict_zone_risk(lat: float, lng: float, hour: int, day_of_week: int, light
 
 # ── Generate heatmap grid ─────────────────────────────────────────────────────
 
+_HEATMAP_CACHE = {}  # Cache by (hour, day_of_week) tuple
+
 def generate_heatmap(center_lat: float, center_lng: float, hour: int, day_of_week: int) -> list:
+    # OPTIMIZED: Check cache first (heatmap doesn't change within same hour)
+    cache_key = (hour, day_of_week)
+    if cache_key in _HEATMAP_CACHE:
+        return _HEATMAP_CACHE[cache_key]
+    
     points = []
     
     import json
@@ -142,9 +152,12 @@ def generate_heatmap(center_lat: float, center_lng: float, hour: int, day_of_wee
     
     cities = [BANGALORE_BOUNDS, MYSORE_BOUNDS]
     
+    # OPTIMIZED: Increased grid step from 0.015 to 0.025 (~2.5km) for ~60% fewer points
+    GRID_STEP = 0.025
+    
     for bounds in cities:
-        for lat_val in np.arange(bounds["lat_min"], bounds["lat_max"], 0.015):
-            for lng_val in np.arange(bounds["lng_min"], bounds["lng_max"], 0.015):
+        for lat_val in np.arange(bounds["lat_min"], bounds["lat_max"], GRID_STEP):
+            for lng_val in np.arange(bounds["lng_min"], bounds["lng_max"], GRID_STEP):
                 lat = round(float(lat_val), 5)
                 lng = round(float(lng_val), 5)
                 # Determine lighting based on time of day
@@ -161,7 +174,7 @@ def generate_heatmap(center_lat: float, center_lng: float, hour: int, day_of_wee
                 # Apply user danger pins to increase risk
                 for pin in danger_pins:
                     dist = np.sqrt((pin["lat"] - lat)**2 + (pin["lng"] - lng)**2)
-                    if dist < 0.015:  # Within approx ~1.5km
+                    if dist < GRID_STEP:  # Within grid cell
                         risk = min(5, risk + 2)  # Increase risk significantly
                 
                 # Filter to only show Moderate, High, Critical
@@ -175,6 +188,9 @@ def generate_heatmap(center_lat: float, center_lng: float, hour: int, day_of_wee
                         "risk": risk,
                         "label": RISK_LABELS[risk_idx],
                     })
+    
+    # Cache the result
+    _HEATMAP_CACHE[cache_key] = points
     return points
 
 # ── Route safety score ────────────────────────────────────────────────────────
