@@ -6,6 +6,9 @@ export default function SafeWalkPage({ userInfo, monitor, isSubComponent }) {
   const [etaMinutes, setEtaMinutes] = useState(15);
   const [dest, setDest] = useState("");
   const intervalRef = useRef(null);
+  const [isVoiceOn, setIsVoiceOn] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const voiceAnnounceRef = useRef(null);
 
   if (!monitor) return null;
 
@@ -38,6 +41,50 @@ export default function SafeWalkPage({ userInfo, monitor, isSubComponent }) {
     try {
       await startSafeWalk(userInfo?.user_id || "anonymous", userInfo?.name || "Anonymous", dest, etaMinutes, 12.9716, 77.5946, userInfo?.emergency_contact || "");
     } catch (err) {}
+  };
+
+  // --- Voice / TTS helpers for periodic reminders ---
+  const speak = (text, onend) => {
+    if (!window.speechSynthesis) return;
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 1.0;
+    u.onend = onend;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+    setIsSpeaking(true);
+  };
+
+  const stopSpeaking = () => {
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+  };
+
+  const startVoiceReminders = () => {
+    if (!sw.active) return;
+    setIsVoiceOn(true);
+    speak(`Voice reminders enabled. I'll announce time remaining every two minutes.`, () => setIsSpeaking(false));
+    // Announce immediately and then every 2 minutes
+    if (voiceAnnounceRef.current) clearInterval(voiceAnnounceRef.current);
+    voiceAnnounceRef.current = setInterval(() => {
+      if (!sw.active) return;
+      const mins = Math.floor((sw.timeLeft || 0) / 60);
+      if (mins <= 0) {
+        speak(`SafeWalk timer expired. Please confirm you are safe.`, () => setIsSpeaking(false));
+        clearInterval(voiceAnnounceRef.current);
+        setIsVoiceOn(false);
+        return;
+      }
+      speak(`Time left: ${mins} ${mins === 1 ? 'minute' : 'minutes'}.`, () => setIsSpeaking(false));
+    }, 120_000);
+  };
+
+  const stopVoiceReminders = () => {
+    setIsVoiceOn(false);
+    if (voiceAnnounceRef.current) {
+      clearInterval(voiceAnnounceRef.current);
+      voiceAnnounceRef.current = null;
+    }
+    stopSpeaking();
   };
 
   const handleCancel = () => {
@@ -98,7 +145,15 @@ export default function SafeWalkPage({ userInfo, monitor, isSubComponent }) {
           <div className="text-6xl font-mono font-bold text-white mb-8 tracking-wider">{formatTime(sw.timeLeft)}</div>
           <div className="grid grid-cols-2 gap-4 w-full">
             <button onClick={handleExtend} className="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-semibold py-3 rounded-xl transition-colors">+10 Mins</button>
-            <button onClick={handleCancel} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition-colors">I'm Safe</button>
+            <div className="flex gap-2">
+              <button onClick={handleCancel} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition-colors">I'm Safe</button>
+              <button
+                onClick={() => isVoiceOn ? stopVoiceReminders() : startVoiceReminders()}
+                className="px-3 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 disabled:opacity-50"
+              >
+                {isVoiceOn ? '🔕 Voice Off' : '🔊 Voice Reminders'}
+              </button>
+            </div>
           </div>
         </div>
       )}

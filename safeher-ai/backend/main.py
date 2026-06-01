@@ -192,11 +192,31 @@ def find_safe_route(req: RouteRequest):
 
     # FIX: Load API key from environment variable — never hardcode secrets
     ORS_KEY = os.getenv("ORS_API_KEY", "")
+    # If ORS API key is not set, gracefully fallback to a straight-line route
+    # and score it locally instead of returning an error. This keeps the
+    # frontend usable in development without external API keys.
     if not ORS_KEY:
-        raise HTTPException(
-            status_code=500,
-            detail="ORS_API_KEY environment variable is not set.",
-        )
+        # build a few simple waypoints (start -> midpoint -> end)
+        waypoints = [
+            {"lat": start.lat, "lng": start.lng},
+            {"lat": (start.lat + end.lat) / 2, "lng": (start.lng + end.lng) / 2},
+            {"lat": end.lat, "lng": end.lng},
+        ]
+        try:
+            scored = score_route(waypoints, hour, dow)
+            route = {
+                "route_index": 0,
+                "coordinates": [[w["lat"], w["lng"]] for w in waypoints],
+                "score": scored["score"] if isinstance(scored, dict) and "score" in scored else scored,
+                "label": scored.get("label") if isinstance(scored, dict) else "",
+                "avg_risk": scored.get("avg_risk") if isinstance(scored, dict) else None,
+                "distance_m": None,
+                "duration_s": None,
+                "is_safest": True,
+            }
+            return {"routes": [route], "total": 1}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Route scoring failed: {str(e)}")
 
     now  = datetime.now()
     hour = req.hour if req.hour is not None else now.hour
