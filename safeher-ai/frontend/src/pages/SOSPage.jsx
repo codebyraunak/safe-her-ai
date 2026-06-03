@@ -288,11 +288,11 @@ export default function SOSPage({ userInfo, onEditProfile }) {
         </div>
 
         {/* Right — Map */}
-        <div className="rounded-2xl overflow-hidden border border-slate-700 min-h-[400px]">
+        <div className="rounded-2xl overflow-hidden border border-slate-700 h-[400px]">
           <MapContainer
             center={pos}
             zoom={15}
-            style={{ height: "100%", minHeight: "400px", width: "100%" }}
+            style={{ height: "400px", width: "100%" }}
           >
             {/* Re-center map when pos updates */}
             <RecenterMap pos={pos} />

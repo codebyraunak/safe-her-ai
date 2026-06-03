@@ -398,16 +398,16 @@ export default function HeatmapPage({ userInfo }) {
       </div>
 
       {/* Map */}
-      <div className="relative flex-1 rounded-2xl overflow-hidden border border-slate-700 min-h-[420px]">
+      <div className="relative flex-1 rounded-2xl overflow-hidden border border-slate-700 h-[420px]">
         <MapContainer
           center={DEFAULT_CENTER}
           zoom={14}
           maxBounds={DATA_BOUNDS}
           maxBoundsViscosity={1}
-          style={{ height: "100%", minHeight: "400px", width: "100%" }}
+          style={{ height: "420px", width: "100%" }}
         >
           <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
             attribution='&copy; OpenStreetMap &copy; CartoDB'
             opacity={0.82}
           />
