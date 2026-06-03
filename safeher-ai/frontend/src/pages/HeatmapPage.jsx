@@ -406,7 +406,7 @@ export default function HeatmapPage({ userInfo }) {
           zoom={14}
           maxBounds={DATA_BOUNDS}
           maxBoundsViscosity={1}
-          style={{ height: "100%", minHeight: "100%", width: "100%" }}
+          style={{ height: "100%", minHeight: "400px", width: "100%" }}
         >
           <TileLayer
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
