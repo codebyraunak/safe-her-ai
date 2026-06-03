@@ -188,9 +188,7 @@ const DEFAULT_CENTER = [12.9716, 77.5946];
 
 const DATA_BOUNDS = [
   [DEFAULT_CENTER[0] - 0.08, DEFAULT_CENTER[1] - 0.08],
-  [DEFAULT_CENTER[0] - 0.08, DEFAULT_CENTER[1] + 0.08],
   [DEFAULT_CENTER[0] + 0.08, DEFAULT_CENTER[1] + 0.08],
-  [DEFAULT_CENTER[0] + 0.08, DEFAULT_CENTER[1] - 0.08],
 ];
 
 /* ─────────────────────────────────────────────
