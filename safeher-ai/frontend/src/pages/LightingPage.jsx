@@ -221,7 +221,7 @@ export default function LightingPage() {
 
       {/* Map */}
       <div className="flex-1 rounded-2xl overflow-hidden border border-slate-700 min-h-[380px]">
-        <MapContainer center={center} zoom={14} style={{ height: "100%", width: "100%" }}>
+        <MapContainer center={center} zoom={14} style={{ height: "100%", minHeight: "100%", width: "100%" }}>
           <RecenterMap center={center} />
           <TileLayer
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"

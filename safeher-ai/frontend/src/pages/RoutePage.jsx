@@ -436,7 +436,7 @@ export default function RoutePage() {
       )}
 
       <div className="flex-1 rounded-2xl overflow-hidden border border-slate-700 min-h-[360px] relative z-0">
-        <MapContainer center={DEFAULT_CENTER} zoom={13} style={{ height: "100%", width: "100%" }}>
+        <MapContainer center={DEFAULT_CENTER} zoom={13} style={{ height: "100%", minHeight: "100%", width: "100%" }}>
           <TileLayer
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             attribution='&copy; OpenStreetMap &copy; CartoDB'

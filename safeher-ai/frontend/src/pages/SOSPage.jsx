@@ -292,7 +292,7 @@ export default function SOSPage({ userInfo, onEditProfile }) {
           <MapContainer
             center={pos}
             zoom={15}
-            style={{ height: "100%", width: "100%" }}
+            style={{ height: "100%", minHeight: "100%", width: "100%" }}
           >
             {/* Re-center map when pos updates */}
             <RecenterMap pos={pos} />
