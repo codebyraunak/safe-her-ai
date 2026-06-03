@@ -20,7 +20,7 @@ from lighting import (
     generate_lighting_map,
     calculate_city_savings,
 )
-from sos import trigger_sos, get_sos_log, find_nearest_station, find_all_stations
+from sos import trigger_sos, get_sos_log, find_nearest_station, find_all_stations, send_risk_warning_sms, send_battery_warning_sms
 from users import register_user, find_nearest_user
 from safewalk import SafeWalkStartRequest, start_safe_walk, cancel_safe_walk, extend_safe_walk, check_active_walks
 from safespots import get_safe_spots
@@ -319,6 +319,7 @@ def nearest_helper(lat: float, lng: float, exclude_user_id: Optional[str] = None
 
 @app.post("/api/sos/trigger")
 def sos_trigger(req: SOSRequest):
+    import traceback
     # FIX: Guard against empty POLICE_STATIONS list before triggering
     try:
         alert = trigger_sos(
@@ -330,14 +331,51 @@ def sos_trigger(req: SOSRequest):
             req.medical_details or "",
         )
     except ValueError as e:
+        traceback.print_exc()
+        print("VALUE ERROR CAUGHT IN SOS TRIGGER:", e)
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
     helper = find_nearest_user(req.lat, req.lng, exclude_user_id=req.user_id)
     if helper:
         alert["nearest_helper"] = helper
     return alert
+
+@app.post("/api/sos/notify-risk")
+def notify_risk_zone(req: SOSRequest):
+    try:
+        success = send_risk_warning_sms(
+            req.user_name or "Anonymous",
+            req.emergency_contact or "",
+            req.lat,
+            req.lng
+        )
+        return {"success": success, "message": "Risk warning SMS sent" if success else "Failed to send SMS"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class BatteryRequest(BaseModel):
+    lat: float = Field(..., ge=-90, le=90)
+    lng: float = Field(..., ge=-180, le=180)
+    user_name: Optional[str] = "Anonymous"
+    emergency_contact: Optional[str] = None
+    battery_level: int = Field(..., ge=0, le=100)
+
+@app.post("/api/sos/notify-battery")
+def notify_battery_low(req: BatteryRequest):
+    try:
+        success = send_battery_warning_sms(
+            req.user_name or "Anonymous",
+            req.emergency_contact or "",
+            req.lat,
+            req.lng,
+            req.battery_level
+        )
+        return {"success": success, "message": "Battery warning SMS sent" if success else "Failed to send SMS"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/sos/log")
 def sos_log():

@@ -81,6 +81,11 @@ export default function App() {
 
     window.addEventListener("beforeinstallprompt", promptHandler);
     window.addEventListener("appinstalled", installedHandler);
+    
+    // Request notification permission for High-Risk Zone alerts
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
 
     return () => {
       window.removeEventListener("beforeinstallprompt", promptHandler);
@@ -142,10 +147,10 @@ export default function App() {
 
   return (
     <div className="relative min-h-screen bg-slate-900 text-white">
-      <header className="fixed inset-x-0 top-0 z-40 flex items-center justify-between gap-3 border-b border-slate-800 bg-slate-950/95 px-4 py-3 shadow-lg shadow-black/10 backdrop-blur-sm lg:hidden">
+      <header className="fixed inset-x-0 top-0 z-40 flex items-center justify-between gap-3 border-b border-slate-700/50 bg-slate-900/40 px-4 py-3 shadow-lg shadow-black/10 backdrop-blur-md lg:hidden">
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="rounded-full bg-pink-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-black/20 hover:bg-pink-500"
+          className="rounded-full bg-pink-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-pink-500/20 hover:bg-pink-500 transition hover:shadow-pink-500/40"
           aria-label="Toggle menu"
         >
           {sidebarOpen ? "Close" : "Menu"}
@@ -156,13 +161,13 @@ export default function App() {
 
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-slate-900/70 lg:hidden"
+          className="fixed inset-0 z-30 bg-slate-900/70 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      <aside className={`fixed inset-y-0 left-0 z-40 transform border-r border-slate-800 bg-slate-950 transition-all duration-300 ease-in-out w-72 ${sidebarWidthClass} ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:fixed lg:top-0 lg:left-0 lg:bottom-0 lg:h-screen`}>
-        <div className="flex items-center justify-between gap-3 border-b border-slate-800 px-5 py-4">
+      <aside className={`fixed inset-y-0 left-0 z-40 transform border-r border-slate-700/50 bg-slate-950/70 backdrop-blur-lg transition-all duration-300 ease-in-out w-72 ${sidebarWidthClass} ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:fixed lg:top-0 lg:left-0 lg:bottom-0 lg:h-screen`}>
+        <div className="flex items-center justify-between gap-3 border-b border-slate-700/50 px-5 py-4">
           <div className="flex items-center gap-3">
             <div className="text-2xl">🛡️</div>
             {!sidebarCollapsed && (
@@ -231,12 +236,12 @@ export default function App() {
         </div>
       </aside>
 
-      <header className="hidden lg:flex fixed inset-x-0 top-0 z-50 items-center justify-between border-b border-slate-800 bg-slate-950/95 px-6 py-4 shadow-lg shadow-black/10 backdrop-blur-sm">
+      <header className="hidden lg:flex fixed inset-x-0 top-0 z-50 items-center justify-between border-b border-slate-700/50 bg-slate-950/40 px-6 py-4 shadow-lg shadow-black/10 backdrop-blur-md">
         <div className="flex items-center gap-3">
-          <div className="text-2xl">🛡️</div>
+          <div className="text-2xl animate-pulse-fast">🛡️</div>
           <div>
-            <div className="text-sm font-semibold uppercase tracking-wide text-slate-300">SafeHer AI</div>
-            <div className="text-xs text-slate-500">Predict. Alert. Protect.</div>
+            <div className="text-sm font-semibold uppercase tracking-wide text-white drop-shadow-md">SafeHer AI</div>
+            <div className="text-xs text-pink-400 drop-shadow-md">Predict. Alert. Protect.</div>
           </div>
         </div>
       </header>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { triggerSOS } from "../api";
+import { triggerSOS, predictZoneRisk, notifyRisk, notifyBattery } from "../api";
 
 export function useSafetyMonitor(userInfo, currentPos) {
   // SafeWalk State
@@ -70,6 +70,83 @@ export function useSafetyMonitor(userInfo, currentPos) {
 
     return () => clearInterval(intervalRef.current);
   }, [swActive, swEtaTime, scStatus, userInfo, currentPos, scTimerMinutes]);
+
+  // ── High-Risk Zone Polling ──
+  const lastNotifiedRef = useRef(0);
+  useEffect(() => {
+    if (!currentPos || !userInfo) return;
+
+    const checkRisk = async () => {
+      try {
+        const now = new Date();
+        const data = await predictZoneRisk(currentPos[0], currentPos[1], now.getHours(), now.getDay(), "dim");
+        
+        // If risk is High and we haven't notified in the last 5 minutes (300,000 ms)
+        if (data.risk_level === "High" && (now.getTime() - lastNotifiedRef.current > 300000)) {
+          lastNotifiedRef.current = now.getTime();
+          
+          if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 500]);
+          
+          if ("Notification" in window && Notification.permission === "granted") {
+            new Notification("⚠️ High Risk Zone Alert", {
+              body: "You have entered a high-risk area. Stay alert and keep your SOS ready.",
+              icon: "/favicon.ico",
+            });
+          }
+
+          // Send automated Twilio SMS warning to emergency contact
+          notifyRisk(currentPos[0], currentPos[1], userInfo.user_id, userInfo.name, userInfo.emergency_contact).catch(() => {});
+        }
+      } catch (err) {
+        // Ignore API errors during background polling
+      }
+    };
+
+    const checkBattery = async () => {
+      try {
+        if ("getBattery" in navigator) {
+          const battery = await navigator.getBattery();
+          const level = Math.round(battery.level * 100);
+          
+          // If battery <= 10% and not charging
+          if (level <= 10 && !battery.charging) {
+            // Check if we already sent a low battery warning recently (e.g. within 1 hour)
+            const lastBatteryWarning = parseInt(localStorage.getItem('last_battery_warning') || '0');
+            const now = Date.now();
+            
+            if (now - lastBatteryWarning > 3600000) { // 1 hour cooldown
+              localStorage.setItem('last_battery_warning', now.toString());
+              
+              if (navigator.vibrate) navigator.vibrate([200, 200, 200]);
+              
+              if ("Notification" in window && Notification.permission === "granted") {
+                new Notification("🔋 Low Battery Alert", {
+                  body: "Your battery is critically low. We've notified your emergency contact.",
+                  icon: "/favicon.ico",
+                });
+              }
+              
+              notifyBattery(currentPos[0], currentPos[1], userInfo.name, userInfo.emergency_contact, level).catch(() => {});
+            }
+          }
+        }
+      } catch (err) {
+        // Ignore battery API errors
+      }
+    };
+
+    // Check immediately, then periodically
+    checkRisk();
+    checkBattery();
+    
+    const riskInterval = setInterval(checkRisk, 30000);
+    const batteryInterval = setInterval(checkBattery, 60000); // Check battery every minute
+    
+    return () => {
+      clearInterval(riskInterval);
+      clearInterval(batteryInterval);
+    };
+  }, [currentPos, userInfo]);
   useEffect(() => {
   if (swEtaTime && swActive) {
     const diff = Math.max(0, Math.floor((swEtaTime - new Date()) / 1000));

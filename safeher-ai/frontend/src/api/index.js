@@ -24,6 +24,9 @@ export const getHeatmap = (center_lat, center_lng, hour, day_of_week) =>
 
 export const getHotspots = () => api("/api/hotspots");
 
+export const predictZoneRisk = (lat, lng, hour, day_of_week, lighting) =>
+  api("/api/zone/risk", "POST", { lat, lng, hour, day_of_week, lighting });
+
 export const scoreRoute = (waypoints, hour, day_of_week) =>
   api("/api/route/score", "POST", { waypoints, hour, day_of_week });
 
@@ -41,6 +44,12 @@ export const getNearestHelper = (lat, lng, exclude_user_id) =>
 
 export const triggerSOS = (lat, lng, user_id, user_name, message, emergency_contact, medical_details) =>
   api("/api/sos/trigger", "POST", { lat, lng, user_id, user_name, message, emergency_contact, medical_details });
+
+export const notifyRisk = (lat, lng, user_id, user_name, emergency_contact) =>
+  api("/api/sos/notify-risk", "POST", { lat, lng, user_id, user_name, message: "Risk Warning", emergency_contact, medical_details: "" });
+
+export const notifyBattery = (lat, lng, user_name, emergency_contact, battery_level) =>
+  api("/api/sos/notify-battery", "POST", { lat, lng, user_name, emergency_contact, battery_level });
 
 export const getSOSLog = () => api("/api/sos/log");
 

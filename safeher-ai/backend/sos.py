@@ -3,6 +3,8 @@ import random
 import csv
 import math
 from pathlib import Path
+import os
+from twilio.rest import Client
 
 # ── Load full police station dataset from CSV ─────────────────────────────────
 POLICE_STATIONS_FILE = Path(__file__).resolve().parent / "data" / "police_stations.csv"
@@ -113,7 +115,78 @@ def trigger_sos(
         f"ETA: ~{estimated_response} min"
     )
 
+    # Send Real SMS via Twilio
+    if emergency_contact:
+        twilio_sid = os.getenv("TWILIO_ACCOUNT_SID")
+        twilio_auth = os.getenv("TWILIO_AUTH_TOKEN")
+        twilio_phone = os.getenv("TWILIO_PHONE_NUMBER")
+        
+        if twilio_sid and twilio_auth and twilio_phone:
+            try:
+                client = Client(twilio_sid, twilio_auth)
+                sms_body = f"URGENT: {user_name} triggered an SOS! Message: {message}. Live Location: https://maps.google.com/?q={lat},{lng}"
+                msg = client.messages.create(
+                    body=sms_body,
+                    from_=twilio_phone,
+                    to=emergency_contact
+                )
+                print(f"[TWILIO] Sent SOS SMS to {emergency_contact}. SID: {msg.sid}")
+            except Exception as e:
+                print(f"[TWILIO ERROR] Failed to send SOS SMS: {e}")
+
     return alert
+
+def send_risk_warning_sms(user_name: str, emergency_contact: str, lat: float, lng: float) -> bool:
+    if not emergency_contact:
+        return False
+        
+    twilio_sid = os.getenv("TWILIO_ACCOUNT_SID")
+    twilio_auth = os.getenv("TWILIO_AUTH_TOKEN")
+    twilio_phone = os.getenv("TWILIO_PHONE_NUMBER")
+    
+    if not (twilio_sid and twilio_auth and twilio_phone):
+        print("[TWILIO ERROR] Missing Twilio credentials in environment.")
+        return False
+        
+    try:
+        client = Client(twilio_sid, twilio_auth)
+        sms_body = f"SafeHer Alert: {user_name} has just entered a High-Risk Zone. They are currently at: https://maps.google.com/?q={lat},{lng}"
+        msg = client.messages.create(
+            body=sms_body,
+            from_=twilio_phone,
+            to=emergency_contact
+        )
+        print(f"[TWILIO] Sent High-Risk Warning SMS to {emergency_contact}. SID: {msg.sid}")
+        return True
+    except Exception as e:
+        print(f"[TWILIO ERROR] Failed to send High-Risk Warning SMS: {e}")
+        return False
+
+def send_battery_warning_sms(user_name: str, emergency_contact: str, lat: float, lng: float, battery_level: int) -> bool:
+    if not emergency_contact:
+        return False
+        
+    twilio_sid = os.getenv("TWILIO_ACCOUNT_SID")
+    twilio_auth = os.getenv("TWILIO_AUTH_TOKEN")
+    twilio_phone = os.getenv("TWILIO_PHONE_NUMBER")
+    
+    if not (twilio_sid and twilio_auth and twilio_phone):
+        print("[TWILIO ERROR] Missing Twilio credentials in environment.")
+        return False
+        
+    try:
+        client = Client(twilio_sid, twilio_auth)
+        sms_body = f"SafeHer Alert: {user_name}'s phone battery is critically low ({battery_level}%). Last known location: https://maps.google.com/?q={lat},{lng}"
+        msg = client.messages.create(
+            body=sms_body,
+            from_=twilio_phone,
+            to=emergency_contact
+        )
+        print(f"[TWILIO] Sent Low Battery Warning SMS to {emergency_contact}. SID: {msg.sid}")
+        return True
+    except Exception as e:
+        print(f"[TWILIO ERROR] Failed to send Low Battery Warning SMS: {e}")
+        return False
 
 def get_sos_log() -> list:
     return SOS_LOG

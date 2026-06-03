@@ -107,6 +107,7 @@ export default function SOSPage({ userInfo, onEditProfile }) {
     setError("");
     setResult(null);
     try {
+      if (!navigator.onLine) throw new Error("Offline");
       const data = await triggerSOS(
         pos[0],
         pos[1],
@@ -117,8 +118,15 @@ export default function SOSPage({ userInfo, onEditProfile }) {
         userInfo.medical_details,
       );
       setResult(data);
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 500]);
     } catch {
-      setError("Could not send SOS. Is the backend running?");
+      setError("Network error. Falling back to offline SMS...");
+      if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
+      
+      const mapsLink = `https://maps.google.com/?q=${pos[0]},${pos[1]}`;
+      const smsBody = encodeURIComponent(`SOS! I am in danger. My live location: ${mapsLink}`);
+      const phone = userInfo.emergency_contact || "";
+      window.location.href = `sms:${phone}?body=${smsBody}`;
     } finally {
       setSending(false);
     }
@@ -233,7 +241,7 @@ export default function SOSPage({ userInfo, onEditProfile }) {
             <button
               onClick={handleSOS}
               disabled={sending || !userInfo}
-              className="w-full py-4 rounded-xl bg-red-600 hover:bg-red-500 active:scale-95 text-white text-lg font-bold disabled:opacity-50 transition transform flex items-center justify-center gap-2"
+              className={`w-full py-4 rounded-xl bg-red-600 hover:bg-red-500 active:scale-95 text-white text-lg font-bold disabled:opacity-50 transition transform flex items-center justify-center gap-2 ${sending ? 'animate-pulse-fast ring-pulse' : 'hover:ring-pulse'}`}
             >
               {sending ? "Sending…" : "🆘  SEND SOS ALERT"}
             </button>

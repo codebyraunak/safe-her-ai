@@ -1,6 +1,7 @@
 import React from "react";
 import SafeWalkPage from "./SafeWalkPage";
 import SmartCheckPage from "./SmartCheckPage";
+import ShakeDetector from "../components/ShakeDetector";
 
 export default function SafeMonitoringPage(props) {
   return (
@@ -11,6 +12,9 @@ export default function SafeMonitoringPage(props) {
           A unified view of your active SafeWalk tracking and background Smart Check routines.
         </p>
       </div>
+
+      {/* Shake Detection Module */}
+      <ShakeDetector userInfo={props.userInfo} currentPos={props.monitor ? props.monitor.currentPos : null} />
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 flex-1 overflow-hidden">
         {/* SafeWalk Column */}
