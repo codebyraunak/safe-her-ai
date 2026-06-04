@@ -312,7 +312,9 @@ export default function SOSPage({ userInfo, onEditProfile }) {
             </Circle>
 
             {/* Police stations */}
-            {stations.map((s, i) => (
+            {stations.map((s, i) => {
+              if (s.lat == null || s.lng == null) return null;
+              return (
               <Circle
                 key={s.id || i}
                 center={[s.lat, s.lng]}
@@ -329,7 +331,8 @@ export default function SOSPage({ userInfo, onEditProfile }) {
                   {s.contact}
                 </Popup>
               </Circle>
-            ))}
+              );
+            })}
           </MapContainer>
         </div>
       </div>

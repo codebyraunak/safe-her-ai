@@ -446,6 +446,7 @@ export default function RoutePage() {
           {/* Render unselected routes first (background) */}
           {routes.map((route, i) => {
             if (selectedRoute === i) return null;
+            if (!route.coordinates || route.coordinates.length === 0) return null;
             const isSafest = route.is_safest;
             return (
               <Polyline
@@ -465,6 +466,7 @@ export default function RoutePage() {
           {/* Render selected route last (foreground) */}
           {routes.map((route, i) => {
             if (selectedRoute !== i) return null;
+            if (!route.coordinates || route.coordinates.length === 0) return null;
             const isSafest = route.is_safest;
             return (
               <Polyline

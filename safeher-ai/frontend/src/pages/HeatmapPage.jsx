@@ -146,7 +146,9 @@ function ZoomAwareHotspots({ hotspots }) {
 
   return (
     <>
-      {hotspots.map((hs) => (
+      {hotspots.map((hs) => {
+        if (hs.center_lat == null || hs.center_lng == null) return null;
+        return (
         <Circle
           key={hs.cluster_id}
           center={[hs.center_lat, hs.center_lng]}
@@ -168,7 +170,8 @@ function ZoomAwareHotspots({ hotspots }) {
             </div>
           </Popup>
         </Circle>
-      ))}
+        );
+      })}
     </>
   );
 }
@@ -436,7 +439,9 @@ export default function HeatmapPage({ userInfo }) {
           <ZoomAwareHotspots hotspots={hotspots} />
 
           {/* Danger pins */}
-          {dangerPins.map((pin, i) => (
+          {dangerPins.map((pin, i) => {
+            if (pin.lat == null || pin.lng == null) return null;
+            return (
             <CircleMarker
               key={`pin-${i}`}
               center={[pin.lat, pin.lng]}
@@ -451,10 +456,12 @@ export default function HeatmapPage({ userInfo }) {
                 </div>
               </Popup>
             </CircleMarker>
-          ))}
+            );
+          })}
 
           {/* Safe spots */}
           {showSafeSpots && safeSpots.map((spot, i) => {
+            if (spot.lat == null || spot.lng == null) return null;
             const color =
               spot.type === "hospital"   ? "#22c55e" :
               spot.type === "24/7 shop"  ? "#eab308" : "#3b82f6";

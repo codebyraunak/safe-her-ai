@@ -227,7 +227,9 @@ export default function LightingPage() {
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             attribution='&copy; OpenStreetMap &copy; CartoDB'
           />
-          {lightingSegments.map((segment) => (
+          {lightingSegments.map((segment) => {
+            if (!segment.positions || segment.positions.length === 0) return null;
+            return (
             <Polyline
               key={segment.id}
               positions={segment.positions}
@@ -248,7 +250,8 @@ export default function LightingPage() {
                 </div>
               </Popup>
             </Polyline>
-          ))}
+            );
+          })}
         </MapContainer>
       </div>
 
