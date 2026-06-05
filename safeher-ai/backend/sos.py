@@ -117,6 +117,14 @@ def trigger_sos(
 
     # Send Real SMS via Twilio
     if emergency_contact:
+        def format_phone_number(phone: str) -> str:
+            phone = "".join(c for c in phone if c.isdigit() or c == "+")
+            if not phone.startswith("+"):
+                # Default to +91 (India) for Bangalore-based app
+                phone = "+91" + phone.lstrip("0")
+            return phone
+            
+        formatted_contact = format_phone_number(emergency_contact)
         twilio_sid = os.getenv("TWILIO_ACCOUNT_SID")
         twilio_auth = os.getenv("TWILIO_AUTH_TOKEN")
         twilio_phone = os.getenv("TWILIO_PHONE_NUMBER")
@@ -128,9 +136,9 @@ def trigger_sos(
                 msg = client.messages.create(
                     body=sms_body,
                     from_=twilio_phone,
-                    to=emergency_contact
+                    to=formatted_contact
                 )
-                print(f"[TWILIO] Sent SOS SMS to {emergency_contact}. SID: {msg.sid}")
+                print(f"[TWILIO] Sent SOS SMS to {formatted_contact}. SID: {msg.sid}")
             except Exception as e:
                 print(f"[TWILIO ERROR] Failed to send SOS SMS: {e}")
 
@@ -139,6 +147,14 @@ def trigger_sos(
 def send_risk_warning_sms(user_name: str, emergency_contact: str, lat: float, lng: float) -> bool:
     if not emergency_contact:
         return False
+        
+    def format_phone_number(phone: str) -> str:
+        phone = "".join(c for c in phone if c.isdigit() or c == "+")
+        if not phone.startswith("+"):
+            phone = "+91" + phone.lstrip("0")
+        return phone
+        
+    formatted_contact = format_phone_number(emergency_contact)
         
     twilio_sid = os.getenv("TWILIO_ACCOUNT_SID")
     twilio_auth = os.getenv("TWILIO_AUTH_TOKEN")
@@ -154,9 +170,9 @@ def send_risk_warning_sms(user_name: str, emergency_contact: str, lat: float, ln
         msg = client.messages.create(
             body=sms_body,
             from_=twilio_phone,
-            to=emergency_contact
+            to=formatted_contact
         )
-        print(f"[TWILIO] Sent High-Risk Warning SMS to {emergency_contact}. SID: {msg.sid}")
+        print(f"[TWILIO] Sent High-Risk Warning SMS to {formatted_contact}. SID: {msg.sid}")
         return True
     except Exception as e:
         print(f"[TWILIO ERROR] Failed to send High-Risk Warning SMS: {e}")
@@ -165,6 +181,14 @@ def send_risk_warning_sms(user_name: str, emergency_contact: str, lat: float, ln
 def send_battery_warning_sms(user_name: str, emergency_contact: str, lat: float, lng: float, battery_level: int) -> bool:
     if not emergency_contact:
         return False
+        
+    def format_phone_number(phone: str) -> str:
+        phone = "".join(c for c in phone if c.isdigit() or c == "+")
+        if not phone.startswith("+"):
+            phone = "+91" + phone.lstrip("0")
+        return phone
+        
+    formatted_contact = format_phone_number(emergency_contact)
         
     twilio_sid = os.getenv("TWILIO_ACCOUNT_SID")
     twilio_auth = os.getenv("TWILIO_AUTH_TOKEN")
@@ -180,9 +204,9 @@ def send_battery_warning_sms(user_name: str, emergency_contact: str, lat: float,
         msg = client.messages.create(
             body=sms_body,
             from_=twilio_phone,
-            to=emergency_contact
+            to=formatted_contact
         )
-        print(f"[TWILIO] Sent Low Battery Warning SMS to {emergency_contact}. SID: {msg.sid}")
+        print(f"[TWILIO] Sent Low Battery Warning SMS to {formatted_contact}. SID: {msg.sid}")
         return True
     except Exception as e:
         print(f"[TWILIO ERROR] Failed to send Low Battery Warning SMS: {e}")
