@@ -7,6 +7,7 @@ import StartPage    from "./pages/StartPage";
 import SmartCheckPage from "./pages/SmartCheckPage";
 import FakeCallPage from "./pages/FakeCallPage";
 import SafeMonitoringPage from "./pages/SafeMonitoringPage";
+import LoginPage    from "./pages/LoginPage";
 import { registerUser } from "./api";
 import { useSafetyMonitor } from "./hooks/useSafetyMonitor";
 
@@ -28,11 +29,17 @@ export default function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [installed, setInstalled] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const monitor = useSafetyMonitor(userInfo, currentPos);
   const currentPage = NAV.find((item) => item.id === page) ?? NAV[0];
 
   useEffect(() => {
+    const authStatus = localStorage.getItem("safeher_auth_token");
+    if (authStatus) {
+      setIsAuthenticated(true);
+    }
+    
     const stored = localStorage.getItem("safeher_user_info");
     if (stored) {
       try {
@@ -144,6 +151,17 @@ export default function App() {
     fakecall:   FakeCallPage,
     sos:        SOSPage,
   }[page] || StartPage;
+
+  if (!isAuthenticated) {
+    return (
+      <LoginPage 
+        onLoginSuccess={() => {
+          setIsAuthenticated(true);
+          localStorage.setItem("safeher_auth_token", "authenticated");
+        }} 
+      />
+    );
+  }
 
   return (
     <div className="relative min-h-screen bg-slate-900 text-white">

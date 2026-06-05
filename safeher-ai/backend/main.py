@@ -26,6 +26,8 @@ from safewalk import SafeWalkStartRequest, start_safe_walk, cancel_safe_walk, ex
 from safespots import get_safe_spots
 import asyncio
 
+from auth import generate_mock_otp, verify_otp
+
 app = FastAPI(
     title="SafeHer AI API",
     version="1.0.0",
@@ -51,6 +53,28 @@ async def startup_event():
 
 
 # ── Request Models ─────────────────────────────────────────────────────────────
+
+class OTPRequest(BaseModel):
+    phone: str
+
+class OTPVerify(BaseModel):
+    phone: str
+    code: str
+
+@app.post("/api/auth/send-otp")
+def api_send_otp(req: OTPRequest):
+    code = generate_mock_otp(req.phone)
+    print(f"[AUTH] Mock OTP for {req.phone} is {code}")
+    return {"success": True, "message": "OTP sent"}
+
+@app.post("/api/auth/verify-otp")
+def api_verify_otp(req: OTPVerify):
+    is_valid = verify_otp(req.phone, req.code)
+    if is_valid:
+        return {"success": True, "token": f"mock-token-{req.phone}", "message": "Verified"}
+    else:
+        raise HTTPException(status_code=401, detail="Invalid or expired OTP")
+
 
 class ZoneRequest(BaseModel):
     lat: float = Field(..., ge=-90, le=90)

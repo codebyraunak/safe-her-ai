@@ -76,4 +76,7 @@ export const getIncidentHistory = () => api("/api/incidents/history");
 
 export const searchLocation = (query) => api(`/api/geocode?q=${encodeURIComponent(query)}`);
 
+export const requestOTP = (phone) => api("/api/auth/send-otp", "POST", { phone });
+export const verifyOTP = (phone, code) => api("/api/auth/verify-otp", "POST", { phone, code });
+
 
