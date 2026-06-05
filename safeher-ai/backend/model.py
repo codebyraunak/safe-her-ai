@@ -52,6 +52,7 @@ KDTREE_COORDS = cKDTree(DF[["lat", "lng"]].values)
 
 # ── DBSCAN hotspot clustering ─────────────────────────────────────────────────
 
+@lru_cache(maxsize=1)
 def get_hotspot_clusters():
     coords = DF[["lat", "lng"]].values
     coords_rad = np.radians(coords)
@@ -155,39 +156,62 @@ def generate_heatmap(center_lat: float, center_lng: float, hour: int, day_of_wee
     # OPTIMIZED: Increased grid step from 0.015 to 0.025 (~2.5km) for ~60% fewer points
     GRID_STEP = 0.025
     
+    coords = []
     for bounds in cities:
         for lat_val in np.arange(bounds["lat_min"], bounds["lat_max"], GRID_STEP):
             for lng_val in np.arange(bounds["lng_min"], bounds["lng_max"], GRID_STEP):
-                lat = round(float(lat_val), 5)
-                lng = round(float(lng_val), 5)
-                # Determine lighting based on time of day
-                if hour >= 21 or hour <= 5:
-                    lighting = "none"
-                elif hour >= 18:
-                    lighting = "dim"
-                else:
-                    lighting = "good"
-                result = predict_zone_risk(lat, lng, hour, day_of_week, lighting)
+                coords.append([round(float(lat_val), 5), round(float(lng_val), 5)])
                 
-                risk = result["risk_level"]
+    if not coords:
+        return []
+        
+    coords_np = np.array(coords)
+    k = 5
+    dists, indices = KDTREE_COORDS.query(coords_np, k=k)
+    
+    if hour >= 21 or hour <= 5:
+        lighting = "none"
+    elif hour >= 18:
+        lighting = "dim"
+    else:
+        lighting = "good"
+        
+    known_lightings = list(LIGHTING_LE.classes_)
+    if lighting not in known_lightings:
+        lighting_enc = known_lightings.index("dim") if "dim" in known_lightings else 0
+    else:
+        lighting_enc = int(LIGHTING_LE.transform([lighting])[0])
+
+    nearest_incident_encs = DF.iloc[indices.flatten()]["incident_enc"].values
+    
+    features = pd.DataFrame({
+        "incident_enc": nearest_incident_encs,
+        "hour": [hour] * (len(coords) * k),
+        "day_of_week": [day_of_week] * (len(coords) * k),
+        "lighting_enc": [lighting_enc] * (len(coords) * k)
+    })
+    
+    predicted_risks = MODEL.predict(features).reshape(-1, k)
+    w_i = 1.0 / (dists**2 + 1e-6)
+    interpolated_risk = np.sum(w_i * predicted_risks, axis=1) / np.sum(w_i, axis=1)
+    risks = np.round(interpolated_risk).astype(int)
+    
+    for i, (lat, lng) in enumerate(coords):
+        risk = risks[i]
+        for pin in danger_pins:
+            dist = np.sqrt((pin["lat"] - lat)**2 + (pin["lng"] - lng)**2)
+            if dist < GRID_STEP:
+                risk = min(5, risk + 2)
                 
-                # Apply user danger pins to increase risk
-                for pin in danger_pins:
-                    dist = np.sqrt((pin["lat"] - lat)**2 + (pin["lng"] - lng)**2)
-                    if dist < GRID_STEP:  # Within grid cell
-                        risk = min(5, risk + 2)  # Increase risk significantly
-                
-                # Filter to only show Moderate, High, Critical
-                if risk >= 3:
-                    risk_idx = min(risk - 1, len(RISK_LABELS) - 1)
-                    risk_idx = max(risk_idx, 0)
-                    
-                    points.append({
-                        "lat": lat,
-                        "lng": lng,
-                        "risk": risk,
-                        "label": RISK_LABELS[risk_idx],
-                    })
+        if risk >= 3:
+            risk_idx = min(risk - 1, len(RISK_LABELS) - 1)
+            risk_idx = max(risk_idx, 0)
+            points.append({
+                "lat": lat,
+                "lng": lng,
+                "risk": int(risk),
+                "label": RISK_LABELS[risk_idx],
+            })
     
     # Cache the result
     _HEATMAP_CACHE[cache_key] = points

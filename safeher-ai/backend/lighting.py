@@ -1,6 +1,7 @@
 import random
 from datetime import datetime
 import requests
+from functools import lru_cache
 
 OVERPASS_URLS = [
     "https://overpass-api.de/api/interpreter",
@@ -137,6 +138,7 @@ def get_segment_lighting(lat: float, lng: float, hour: int = None) -> dict:
         "mode_desc": zone["mode_desc"],
     }
 
+@lru_cache(maxsize=128)
 def fetch_osm_road_segments(center_lat: float, center_lng: float, hour: int = None, radius_m: int = 4200) -> list:
     query = f"""
     [out:json][timeout:12];

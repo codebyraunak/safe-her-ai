@@ -449,32 +449,33 @@ def api_get_safe_spots(lat: float, lng: float, radius: int = 2000):
 
 # ── Incident History Feed ───────────────────────────────────────────────────────
 
+_RECENT_INCIDENTS_CACHE = None
+
 @app.get("/api/incidents/history")
 def api_get_incident_history():
-    import pandas as pd
     from datetime import datetime, timedelta
-    data_path = os.path.join(os.path.dirname(__file__), "data", "incidents.csv")
-    if not os.path.exists(data_path):
-        return {"incidents": []}
-        
-    df = pd.read_csv(data_path)
-    # Sort by some logic or just take last N rows. 
-    # The dataset might not have real timestamps, so let's synthesize recent times
-    recent = df.tail(15).copy()
+    global _RECENT_INCIDENTS_CACHE
     
+    if _RECENT_INCIDENTS_CACHE is None:
+        import pandas as pd
+        data_path = os.path.join(os.path.dirname(__file__), "data", "incidents.csv")
+        if not os.path.exists(data_path):
+            return {"incidents": []}
+        df = pd.read_csv(data_path)
+        _RECENT_INCIDENTS_CACHE = df.tail(15).to_dict('records')
+        
     incidents = []
     now = datetime.now()
-    for i, row in enumerate(recent.itertuples()):
-        # Mock recent time: from 1 min ago to 5 hours ago
+    for i, row in enumerate(_RECENT_INCIDENTS_CACHE):
         time_diff = timedelta(minutes=i*15 + 2)
         inc_time = now - time_diff
         
         incidents.append({
-            "id": getattr(row, "id", i),
-            "type": getattr(row, "incident_type", "Unknown").title(),
-            "lat": getattr(row, "lat", 0),
-            "lng": getattr(row, "lng", 0),
-            "area": getattr(row, "area", "Unknown Area"),
+            "id": row.get("id", i),
+            "type": row.get("incident_type", "Unknown").title(),
+            "lat": row.get("lat", 0),
+            "lng": row.get("lng", 0),
+            "area": row.get("area", "Unknown Area"),
             "time": inc_time.isoformat(),
             "relative_time": f"{int(time_diff.total_seconds() // 60)} mins ago" if time_diff.total_seconds() < 3600 else f"{int(time_diff.total_seconds() // 3600)} hours ago"
         })
