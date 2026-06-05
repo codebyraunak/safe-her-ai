@@ -163,6 +163,25 @@ export default function App() {
     );
   }
 
+  const hasCompletedProfile = userInfo && userInfo.name && userInfo.emergency_contact;
+
+  if (!hasCompletedProfile) {
+    return (
+      <div className="min-h-screen bg-slate-950 p-4 lg:p-8 flex items-center justify-center">
+        <div className="w-full max-w-5xl bg-slate-900 border border-slate-800 shadow-2xl rounded-3xl p-6 lg:p-10">
+          <StartPage 
+            userInfo={userInfo} 
+            setUserInfo={(info) => {
+              setUserInfo(info);
+              setPage("heatmap");
+            }} 
+            onComplete={() => setPage("heatmap")}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative min-h-screen bg-slate-900 text-white">
       <header className="fixed inset-x-0 top-0 z-40 flex items-center justify-between gap-3 border-b border-slate-700/50 bg-slate-900/40 px-4 py-3 shadow-lg shadow-black/10 backdrop-blur-md lg:hidden">
