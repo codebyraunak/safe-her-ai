@@ -28,8 +28,8 @@ export default function LoginPage({ onLoginSuccess }) {
 
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
-    if (otp.length !== 6) {
-      setError("Please enter the 6-digit OTP.");
+    if (otp.length !== 4) {
+      setError("Please enter the 4-digit OTP.");
       return;
     }
     setError("");
@@ -97,22 +97,22 @@ export default function LoginPage({ onLoginSuccess }) {
                 {loading ? "Sending OTP..." : "Get OTP"}
               </button>
               <p className="text-center text-xs text-slate-500 mt-4">
-                For demo purposes, a mock OTP of <span className="font-mono text-pink-400">000000</span> will be generated.
+                For demo purposes, a mock OTP of <span className="font-mono text-pink-400">1432</span> will be generated.
               </p>
             </form>
           ) : (
             <form onSubmit={handleVerifyOTP} className="space-y-4">
               <div>
                 <p className="text-sm text-slate-400 mb-4">
-                  We've sent a 6-digit verification code to <span className="text-white">{phone}</span>.
+                  We've sent a 4-digit verification code to <span className="text-white">{phone}</span>.
                 </p>
                 <label className="block text-sm font-medium text-slate-300 mb-2">Verification Code</label>
                 <input
                   type="text"
-                  maxLength={6}
+                  maxLength={4}
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                  placeholder="000000"
+                  placeholder="1432"
                   className="w-full bg-slate-800/50 border border-slate-700 text-white rounded-xl py-3 px-4 text-center text-2xl tracking-[0.5em] font-mono focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
                 />
               </div>

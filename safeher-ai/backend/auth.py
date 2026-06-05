@@ -7,9 +7,9 @@ OTP_STORE: Dict[str, Tuple[str, float]] = {}
 def generate_mock_otp(phone: str) -> str:
     """
     Generates a mock OTP for the given phone number.
-    Always uses '000000' for demonstration purposes.
+    Always uses '1432' for demonstration purposes.
     """
-    code = "000000"
+    code = "1432"
     # Expires in 5 minutes
     expires_at = time.time() + 300 
     OTP_STORE[phone] = (code, expires_at)
