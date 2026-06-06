@@ -197,7 +197,7 @@ const DATA_BOUNDS = [
 /* ─────────────────────────────────────────────
    Main Page
 ───────────────────────────────────────────── */
-export default function HeatmapPage({ userInfo }) {
+export default function HeatmapPage({ userInfo, currentPos, theme }) {
   const [points,        setPoints]        = useState([]);
   const [hotspots,      setHotspots]      = useState([]);
   const [selectedHour,  setSelectedHour]  = useState(new Date().getHours());
@@ -309,18 +309,18 @@ export default function HeatmapPage({ userInfo }) {
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Safety Heatmap</h1>
-          <p className="text-sm text-slate-400">AI-predicted risk zones — updated in real time</p>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Safety Heatmap</h1>
+          <p className="text-sm text-slate-600 dark:text-slate-400">AI-predicted risk zones — updated in real time</p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-[1.4fr_0.9fr] items-center rounded-3xl border border-slate-700/80 bg-slate-900/70 p-4 shadow-xl shadow-slate-950/30">
+        <div className="grid gap-4 md:grid-cols-[1.4fr_0.9fr] items-center rounded-3xl border border-black/10 dark:border-slate-700/80 bg-white/40 dark:bg-white/40 dark:bg-slate-900/70 p-4 shadow-xl shadow-slate-950/30">
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm text-slate-400 uppercase tracking-[0.18em]">Time of day</p>
-                <p className="text-lg font-semibold text-white">Choose a risk window</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400 uppercase tracking-[0.18em]">Time of day</p>
+                <p className="text-lg font-semibold text-slate-800 dark:text-white">Choose a risk window</p>
               </div>
-              <div className="rounded-full bg-slate-800 px-3 py-2 text-sm font-semibold text-white border border-slate-700">
+              <div className="rounded-full bg-white/60 dark:bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-800 dark:text-white border border-black/10 dark:border-slate-700">
                 Selected: {String(selectedHour).padStart(2, "0")}:00
               </div>
             </div>
@@ -337,10 +337,10 @@ export default function HeatmapPage({ userInfo }) {
             </div>
           </div>
 
-          <div className="flex flex-col justify-center gap-3 rounded-3xl border border-slate-700/80 bg-slate-950/60 p-4">
-            <div className="rounded-3xl bg-slate-900/80 p-5 border border-slate-700 text-center">
-              <p className="text-xs text-slate-400 uppercase tracking-[0.16em]">Current time</p>
-              <p className="text-4xl font-bold text-white mt-3">{currentTimeLabel}</p>
+          <div className="flex flex-col justify-center gap-3 rounded-3xl border border-black/10 dark:border-slate-700/80 bg-white/40 dark:bg-white/40 dark:bg-slate-950/60 p-4">
+            <div className="rounded-3xl bg-white/40 dark:bg-white/40 dark:bg-slate-900/80 p-5 border border-black/10 dark:border-slate-700 text-center">
+              <p className="text-xs text-slate-600 dark:text-slate-400 uppercase tracking-[0.16em]">Current time</p>
+              <p className="text-4xl font-bold text-slate-800 dark:text-white mt-3">{currentTimeLabel}</p>
               <p className="text-xs text-slate-500 mt-3 uppercase tracking-[0.16em]">Displayed data hour</p>
               <p className="text-xl font-semibold text-pink-300 mt-1">
                 {String(appliedHour).padStart(2, "0")}:00 {appliedHour === currentHour ? "(Live)" : "(Preview)"}
@@ -349,7 +349,7 @@ export default function HeatmapPage({ userInfo }) {
             <button
               onClick={() => setAppliedHour(selectedHour)}
               disabled={loading}
-              className="w-full rounded-2xl bg-gradient-to-r from-pink-600 to-fuchsia-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-pink-500/20 transition hover:from-pink-500 hover:to-fuchsia-400 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-2xl bg-gradient-to-r from-pink-600 to-fuchsia-500 px-4 py-3 text-sm font-semibold text-slate-800 dark:text-white shadow-lg shadow-pink-500/20 transition hover:from-pink-500 hover:to-fuchsia-400 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? "Loading…" : previewButtonLabel}
             </button>
@@ -358,8 +358,8 @@ export default function HeatmapPage({ userInfo }) {
               disabled={loading}
               className={`w-full rounded-2xl px-4 py-3 text-sm font-semibold shadow-lg transition disabled:cursor-not-allowed disabled:opacity-50 ${
                 showSafeSpots
-                  ? "bg-slate-700 text-white border border-slate-600"
-                  : "bg-gradient-to-r from-blue-600 to-blue-500 text-white border border-transparent hover:from-blue-500 hover:to-blue-400"
+                  ? "bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white border border-black/20 dark:border-slate-600"
+                  : "bg-gradient-to-r from-blue-600 to-blue-500 text-slate-800 dark:text-white border border-transparent hover:from-blue-500 hover:to-blue-400"
               }`}
             >
               {showSafeSpots ? "Hide Safe Spots" : "Show Safe Spots (Police/Hospital)"}
@@ -383,25 +383,25 @@ export default function HeatmapPage({ userInfo }) {
         ].map(([label, color]) => (
           <div key={label} className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
-            <span className="text-xs text-slate-400">{label}</span>
+            <span className="text-xs text-slate-600 dark:text-slate-400">{label}</span>
           </div>
         ))}
         <div className="flex items-center gap-1.5 ml-4">
           <div className="w-3 h-3 rounded-full border-2 border-pink-400" />
-          <span className="text-xs text-slate-400">DBSCAN Hotspot</span>
+          <span className="text-xs text-slate-600 dark:text-slate-400">DBSCAN Hotspot</span>
         </div>
         <div className="flex items-center gap-1.5 ml-4">
           <div className="w-3 h-3 rounded-full bg-red-500 border border-white" />
-          <span className="text-xs text-slate-400">Danger Pin</span>
+          <span className="text-xs text-slate-600 dark:text-slate-400">Danger Pin</span>
         </div>
         <div className="flex items-center gap-1.5 ml-4">
           <div className="w-3 h-3 rounded-full bg-blue-500" />
-          <span className="text-xs text-slate-400">Safe Spot</span>
+          <span className="text-xs text-slate-600 dark:text-slate-400">Safe Spot</span>
         </div>
       </div>
 
       {/* Map */}
-      <div className="relative flex-1 rounded-2xl overflow-hidden border border-slate-700 h-[420px]">
+      <div className="relative flex-1 rounded-2xl overflow-hidden border border-black/10 dark:border-slate-700 h-[420px]">
         <MapContainer
           center={DEFAULT_CENTER}
           zoom={14}
@@ -410,7 +410,7 @@ export default function HeatmapPage({ userInfo }) {
           style={{ height: "420px", width: "100%" }}
         >
           <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
+            url={theme === "dark" ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png" : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"}
             attribution='&copy; OpenStreetMap &copy; CartoDB'
             opacity={0.82}
           />
@@ -488,13 +488,13 @@ export default function HeatmapPage({ userInfo }) {
         <div className="absolute top-4 right-4 z-[400] flex flex-col items-end">
           <button
             onClick={() => setShowFeed(!showFeed)}
-            className="mb-2 rounded-xl bg-slate-900/90 border border-slate-700 px-4 py-2 text-sm font-semibold text-white shadow-xl backdrop-blur-md hover:bg-slate-800 transition"
+            className="mb-2 rounded-xl bg-white/40 dark:bg-white/40 dark:bg-slate-900/90 border border-black/10 dark:border-slate-700 px-4 py-2 text-sm font-semibold text-slate-800 dark:text-white shadow-xl backdrop-blur-md hover:bg-white/60 dark:bg-slate-800 transition"
           >
             {showFeed ? "Hide Activity Feed" : "Live Activity Feed 🔔"}
           </button>
           {showFeed && (
-            <div className="w-80 max-h-96 overflow-y-auto rounded-2xl bg-slate-900/95 border border-slate-700 shadow-2xl backdrop-blur-xl p-4 flex flex-col gap-3">
-              <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-1 sticky top-0 bg-slate-900/95 pb-2">
+            <div className="w-80 max-h-96 overflow-y-auto rounded-2xl bg-white/40 dark:bg-white/40 dark:bg-slate-900/95 border border-black/10 dark:border-slate-700 shadow-2xl backdrop-blur-xl p-4 flex flex-col gap-3">
+              <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1 sticky top-0 bg-white/40 dark:bg-white/40 dark:bg-slate-900/95 pb-2">
                 Recent Reports
               </h3>
               {incidents.length === 0 ? (
@@ -503,7 +503,7 @@ export default function HeatmapPage({ userInfo }) {
                 incidents.map((inc) => (
                   <div key={inc.id} className="border-l-2 border-pink-500 pl-3 py-1">
                     <p className="text-xs text-pink-400 font-semibold">{inc.type}</p>
-                    <p className="text-sm text-slate-300">{inc.area}</p>
+                    <p className="text-sm text-slate-700 dark:text-slate-300">{inc.area}</p>
                     <p className="text-xs text-slate-500 mt-1">{inc.relative_time}</p>
                   </div>
                 ))
@@ -519,19 +519,19 @@ export default function HeatmapPage({ userInfo }) {
           { label: "Total Zones",     value: points.length,                          color: "text-pink-400"    },
           { label: "High Risk Zones", value: points.filter(p => p.risk >= 4).length, color: "text-red-400"     },
           { label: "DBSCAN Hotspots", value: hotspots.length,                        color: "text-amber-400"   },
-          { label: "Smart Check",     value: homeSaved ? "Ready" : "Setup required", color: homeSaved ? "text-emerald-400" : "text-slate-400" },
+          { label: "Smart Check",     value: homeSaved ? "Ready" : "Setup required", color: homeSaved ? "text-emerald-400" : "text-slate-600 dark:text-slate-400" },
         ].map(s => (
-          <div key={s.label} className="bg-slate-800/60 rounded-xl p-4 border border-slate-700">
+          <div key={s.label} className="bg-white/60 dark:bg-white/60 dark:bg-slate-800/60 rounded-xl p-4 border border-black/10 dark:border-slate-700">
             <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-            <p className="text-xs text-slate-400 mt-1">{s.label}</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{s.label}</p>
           </div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700">
-          <p className="text-xs text-slate-400">Nearest helper</p>
-          <p className="text-2xl font-bold text-white mt-2">
+        <div className="bg-white/60 dark:bg-white/60 dark:bg-slate-800/60 rounded-xl p-4 border border-black/10 dark:border-slate-700">
+          <p className="text-xs text-slate-600 dark:text-slate-400">Nearest helper</p>
+          <p className="text-2xl font-bold text-slate-800 dark:text-white mt-2">
             {nearestHelper ? `${nearestHelper.name} (${nearestHelper.distance_km} km)` : "No helper nearby"}
           </p>
           <p className="text-xs text-slate-500 mt-2">Routes your emergency to the closest available user.</p>
@@ -541,18 +541,18 @@ export default function HeatmapPage({ userInfo }) {
       {/* Report Modal */}
       {reportModal.open && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-slate-900 border border-slate-700 p-6 shadow-xl">
-            <h2 className="text-xl font-bold text-white mb-4">Report Danger Here?</h2>
-            <p className="text-sm text-slate-400 mb-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white/40 dark:bg-slate-900 border border-black/10 dark:border-slate-700 p-6 shadow-xl">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Report Danger Here?</h2>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
               {reportModal.lat.toFixed(4)}, {reportModal.lng.toFixed(4)}
             </p>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Type of Danger</label>
+                <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1">Type of Danger</label>
                 <select
                   value={reportType}
                   onChange={(e) => setReportType(e.target.value)}
-                  className="w-full rounded-lg bg-slate-800 border border-slate-700 p-2 text-white outline-none focus:border-pink-500"
+                  className="w-full rounded-lg bg-white/60 dark:bg-slate-800 border border-black/10 dark:border-slate-700 p-2 text-slate-800 dark:text-white outline-none focus:border-pink-500"
                 >
                   <option>Harassment</option>
                   <option>Suspicious Activity</option>
@@ -562,26 +562,26 @@ export default function HeatmapPage({ userInfo }) {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Description (Optional)</label>
+                <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1">Description (Optional)</label>
                 <input
                   type="text"
                   value={reportDesc}
                   onChange={(e) => setReportDesc(e.target.value)}
                   placeholder="Additional details..."
-                  className="w-full rounded-lg bg-slate-800 border border-slate-700 p-2 text-white outline-none focus:border-pink-500"
+                  className="w-full rounded-lg bg-white/60 dark:bg-slate-800 border border-black/10 dark:border-slate-700 p-2 text-slate-800 dark:text-white outline-none focus:border-pink-500"
                 />
               </div>
             </div>
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setReportModal({ open: false, lat: null, lng: null })}
-                className="flex-1 rounded-lg bg-slate-800 py-2 text-sm font-semibold text-white hover:bg-slate-700"
+                className="flex-1 rounded-lg bg-white/60 dark:bg-slate-800 py-2 text-sm font-semibold text-slate-800 dark:text-white hover:bg-slate-200 dark:bg-slate-700"
               >
                 Cancel
               </button>
               <button
                 onClick={submitDangerPin}
-                className="flex-1 rounded-lg bg-red-600 py-2 text-sm font-semibold text-white hover:bg-red-500"
+                className="flex-1 rounded-lg bg-red-600 py-2 text-sm font-semibold text-slate-800 dark:text-white hover:bg-red-500"
               >
                 Report
               </button>

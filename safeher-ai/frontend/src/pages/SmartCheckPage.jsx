@@ -22,7 +22,7 @@ function formatTime(seconds) {
   return `${mins}:${secs}`;
 }
 
-export default function SmartCheckPage({ userInfo, onEditProfile, monitor, isSubComponent }) {
+export default function SmartCheckPage({ userInfo, onEditProfile, monitor, isSubComponent, theme }) {
   const { sc, globalConfirmSafe } = monitor || {};
   const [currentPos, setCurrentPos] = useState(DEFAULT_POS);
   const [homePos, setHomePos] = useState(null);
@@ -110,22 +110,22 @@ export default function SmartCheckPage({ userInfo, onEditProfile, monitor, isSub
     <div className="flex flex-col gap-4 h-full">
       {!isSubComponent && (
         <div>
-          <h1 className="text-2xl font-bold text-white">Smart Check</h1>
-          <p className="text-sm text-slate-400">Monitor your routine and send an automatic alert if you don’t confirm safety in time.</p>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Smart Check</h1>
+          <p className="text-sm text-slate-600 dark:text-slate-400">Monitor your routine and send an automatic alert if you don’t confirm safety in time.</p>
         </div>
       )}
       {isSubComponent && (
         <div className="text-center mt-2 mb-2">
-          <h2 className="text-2xl font-bold text-white mb-1">Smart Check</h2>
-          <p className="text-xs text-slate-400">Routine background monitoring.</p>
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-1">Smart Check</h2>
+          <p className="text-xs text-slate-600 dark:text-slate-400">Routine background monitoring.</p>
         </div>
       )}
 
       <div className={`grid grid-cols-1 ${isSubComponent ? '' : 'lg:grid-cols-2'} gap-4 flex-1`}>
-        <div className="bg-slate-800/60 rounded-2xl p-6 border border-slate-700 space-y-4">
-          <div className="rounded-2xl bg-slate-900/50 p-4 border border-slate-700 space-y-3">
+        <div className="bg-white/60 dark:bg-white/60 dark:bg-slate-800/60 rounded-2xl p-6 border border-black/10 dark:border-slate-700 space-y-4">
+          <div className="rounded-2xl bg-white/40 dark:bg-white/40 dark:bg-slate-900/50 p-4 border border-black/10 dark:border-slate-700 space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-slate-400">Home location</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Home location</p>
               {homePos && !editingHome && (
                 <button
                   onClick={() => setEditingHome(true)}
@@ -138,17 +138,17 @@ export default function SmartCheckPage({ userInfo, onEditProfile, monitor, isSub
 
             {homePos && !editingHome ? (
               <>
-                <p className="text-white font-mono text-sm">{homePos[0].toFixed(5)}, {homePos[1].toFixed(5)}</p>
+                <p className="text-slate-800 dark:text-white font-mono text-sm">{homePos[0].toFixed(5)}, {homePos[1].toFixed(5)}</p>
                 <p className="text-xs text-emerald-400">✅ Home location is set</p>
               </>
             ) : (
               <>
-                <p className="text-white font-mono text-sm">{currentPos[0].toFixed(5)}, {currentPos[1].toFixed(5)}</p>
+                <p className="text-slate-800 dark:text-white font-mono text-sm">{currentPos[0].toFixed(5)}, {currentPos[1].toFixed(5)}</p>
                 <p className="text-xs text-slate-500">Your current GPS position will be saved as home</p>
                 <div className="flex gap-2 flex-wrap">
                   <button
                     onClick={saveHomeLocation}
-                    className="flex-1 px-4 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-500 text-white text-sm transition"
+                    className="flex-1 px-4 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-500 text-slate-800 dark:text-white text-sm transition"
                   >
                     {homePos ? "Update home location" : "Save as home location"}
                   </button>
@@ -156,7 +156,7 @@ export default function SmartCheckPage({ userInfo, onEditProfile, monitor, isSub
                     <>
                       <button
                         onClick={() => setEditingHome(false)}
-                        className="px-4 py-2.5 rounded-xl border border-slate-600 text-slate-300 text-sm hover:bg-slate-700 transition"
+                        className="px-4 py-2.5 rounded-xl border border-black/20 dark:border-slate-600 text-slate-700 dark:text-slate-300 text-sm hover:bg-slate-200 dark:bg-slate-700 transition"
                       >
                         Cancel
                       </button>
@@ -173,9 +173,9 @@ export default function SmartCheckPage({ userInfo, onEditProfile, monitor, isSub
             )}
           </div>
 
-          <div className="rounded-2xl bg-slate-900/50 p-4 border border-slate-700">
-            <p className="text-sm text-slate-400">Current position</p>
-            <p className="text-white mt-2">{currentPos[0].toFixed(5)}, {currentPos[1].toFixed(5)}</p>
+          <div className="rounded-2xl bg-white/40 dark:bg-white/40 dark:bg-slate-900/50 p-4 border border-black/10 dark:border-slate-700">
+            <p className="text-sm text-slate-600 dark:text-slate-400">Current position</p>
+            <p className="text-slate-800 dark:text-white mt-2">{currentPos[0].toFixed(5)}, {currentPos[1].toFixed(5)}</p>
             <p className="text-xs text-slate-500 mt-2">
               {homePos ? `You are ${Math.round(homeDistance)} meters from home.` : "Set home location first."}
             </p>
@@ -188,28 +188,28 @@ export default function SmartCheckPage({ userInfo, onEditProfile, monitor, isSub
             <div className="flex items-center justify-between gap-3">
               <button
                 onClick={startMonitoring}
-                className="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold"
+                className="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-800 dark:text-white font-semibold"
               >
                 Start Smart Check
               </button>
               <button
                 onClick={confirmSafe}
                 disabled={sc.status !== "pending"}
-                className="flex-1 py-3 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-semibold disabled:opacity-50"
+                className="flex-1 py-3 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-600 text-slate-800 dark:text-white font-semibold disabled:opacity-50"
               >
                 I’m Safe
               </button>
             </div>
             <button
               onClick={stopMonitoring}
-              className="w-full py-3 rounded-xl border border-slate-600 text-slate-200 hover:bg-slate-700"
+              className="w-full py-3 rounded-xl border border-black/20 dark:border-slate-600 text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:bg-slate-700"
             >
               Stop Monitoring
             </button>
           </div>
 
-          <div className="rounded-2xl bg-slate-900/50 p-4 border border-slate-700">
-            <p className="text-sm text-slate-400">Timer Duration</p>
+          <div className="rounded-2xl bg-white/40 dark:bg-white/40 dark:bg-slate-900/50 p-4 border border-black/10 dark:border-slate-700">
+            <p className="text-sm text-slate-600 dark:text-slate-400">Timer Duration</p>
             <div className="flex items-center gap-3 mt-3">
               <input
                 type="number"
@@ -224,15 +224,15 @@ export default function SmartCheckPage({ userInfo, onEditProfile, monitor, isSub
                   }
                 }}
                 disabled={sc.status === "pending"}
-                className="w-20 px-3 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:outline-none focus:border-pink-500 disabled:opacity-50"
+                className="w-20 px-3 py-2 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white rounded-lg border border-black/20 dark:border-slate-600 focus:outline-none focus:border-pink-500 disabled:opacity-50"
               />
-              <span className="text-white">minutes</span>
+              <span className="text-slate-800 dark:text-white">minutes</span>
             </div>
             <p className="text-xs text-slate-500 mt-2">Set how long to wait before triggering an alert if you don't confirm safety.</p>
           </div>
 
-          <div className="rounded-2xl bg-slate-900/50 p-4 border border-slate-700">
-            <p className="text-sm text-slate-400">Timer</p>
+          <div className="rounded-2xl bg-white/40 dark:bg-white/40 dark:bg-slate-900/50 p-4 border border-black/10 dark:border-slate-700">
+            <p className="text-sm text-slate-600 dark:text-slate-400">Timer</p>
             <div className="flex items-center justify-center mt-3">
               <div className="relative">
                 <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 100 100">
@@ -261,7 +261,7 @@ export default function SmartCheckPage({ userInfo, onEditProfile, monitor, isSub
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-white">{sc.status === "pending" ? formatTime(sc.countdown) : formatTime(sc.timerMinutes * 60)}</p>
+                    <p className="text-2xl font-bold text-slate-800 dark:text-white">{sc.status === "pending" ? formatTime(sc.countdown) : formatTime(sc.timerMinutes * 60)}</p>
                     <p className="text-xs text-slate-500">minutes</p>
                   </div>
                 </div>
@@ -271,18 +271,18 @@ export default function SmartCheckPage({ userInfo, onEditProfile, monitor, isSub
           </div>
 
           {sc.message && (
-            <div className="rounded-2xl bg-blue-900/30 border border-blue-500/30 p-4 text-sm text-slate-200">
+            <div className="rounded-2xl bg-blue-900/30 border border-blue-500/30 p-4 text-sm text-slate-800 dark:text-slate-200">
               {sc.message}
             </div>
           )}
 
           {!userInfo && (
-            <div className="rounded-2xl bg-yellow-900/30 border border-yellow-500/30 p-4 text-sm text-slate-200">
+            <div className="rounded-2xl bg-yellow-900/30 border border-yellow-500/30 p-4 text-sm text-slate-800 dark:text-slate-200">
               <p className="font-semibold">Profile required</p>
               <p className="mt-2">Please save your profile first so Smart Check can notify your emergency contact.</p>
               <button
                 onClick={onEditProfile}
-                className="mt-3 px-4 py-3 rounded-xl bg-pink-600 hover:bg-pink-500 text-white text-sm"
+                className="mt-3 px-4 py-3 rounded-xl bg-pink-600 hover:bg-pink-500 text-slate-800 dark:text-white text-sm"
               >
                 Go to Profile Setup
               </button>
@@ -290,10 +290,10 @@ export default function SmartCheckPage({ userInfo, onEditProfile, monitor, isSub
           )}
         </div>
 
-        <div className="bg-slate-800/60 rounded-2xl p-6 border border-slate-700">
-          <p className="text-sm text-slate-400">Smart Check alert history</p>
+        <div className="bg-white/60 dark:bg-white/60 dark:bg-slate-800/60 rounded-2xl p-6 border border-black/10 dark:border-slate-700">
+          <p className="text-sm text-slate-600 dark:text-slate-400">Smart Check alert history</p>
           {sc.result ? (
-            <div className="mt-4 rounded-2xl bg-green-900/30 border border-green-500/30 p-4 text-sm text-slate-200 space-y-2">
+            <div className="mt-4 rounded-2xl bg-green-900/30 border border-green-500/30 p-4 text-sm text-slate-800 dark:text-slate-200 space-y-2">
               <p className="font-semibold">Alert triggered</p>
               <p>Alert ID: {sc.result.alert_id}</p>
               <p>Station: {sc.result.nearest_station?.name}</p>
@@ -301,14 +301,14 @@ export default function SmartCheckPage({ userInfo, onEditProfile, monitor, isSub
               <p>Medical: {sc.result.medical_details || "N/A"}</p>
             </div>
           ) : (
-            <div className="mt-4 rounded-2xl bg-slate-900/30 border border-slate-700 p-4 text-sm text-slate-400">
+            <div className="mt-4 rounded-2xl bg-white/40 dark:bg-white/40 dark:bg-slate-900/30 border border-black/10 dark:border-slate-700 p-4 text-sm text-slate-600 dark:text-slate-400">
               No Smart Check alert has been triggered yet.
             </div>
           )}
 
-          <div className="mt-6 rounded-2xl bg-slate-900/30 border border-slate-700 p-4 text-sm text-slate-400">
+          <div className="mt-6 rounded-2xl bg-white/40 dark:bg-white/40 dark:bg-slate-900/30 border border-black/10 dark:border-slate-700 p-4 text-sm text-slate-600 dark:text-slate-400">
             <p className="font-semibold">How it works</p>
-            <ul className="mt-3 space-y-2 list-disc list-inside text-slate-400">
+            <ul className="mt-3 space-y-2 list-disc list-inside text-slate-600 dark:text-slate-400">
               <li>Save your home location.</li>
               <li>Start Smart Check before you leave.</li>
               <li>If you do not confirm safe within the set time, the app triggers an alert.</li>

@@ -30,6 +30,20 @@ export default function App() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [installed, setInstalled] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
+
+  useEffect(() => {
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === "dark" ? "light" : "dark");
+  };
 
   const monitor = useSafetyMonitor(userInfo, currentPos);
   const currentPage = NAV.find((item) => item.id === page) ?? NAV[0];
@@ -167,11 +181,11 @@ export default function App() {
 
   if (!hasCompletedProfile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#050510] via-indigo-950 to-[#0a0a1a] p-4 lg:p-8 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-pink-50 to-purple-50 dark:from-[#050510] dark:via-indigo-950 dark:to-[#0a0a1a] p-4 lg:p-8 flex items-center justify-center transition-colors duration-500">
         <div className="w-full max-w-5xl glass-panel rounded-3xl p-6 lg:p-10 relative overflow-hidden">
           {/* Subtle glowing orbs behind the glass panel */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-pink-600/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-violet-600/20 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-pink-400/30 dark:bg-pink-600/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-violet-400/30 dark:bg-violet-600/20 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/2 pointer-events-none" />
           
           <div className="relative z-10">
             <StartPage 
@@ -181,6 +195,7 @@ export default function App() {
                 setPage("heatmap");
               }} 
               onComplete={() => setPage("heatmap")}
+              theme={theme}
             />
           </div>
         </div>
@@ -189,11 +204,11 @@ export default function App() {
   }
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-[#050510] via-[#0a0a1a] to-[#0f0b1a] text-white selection:bg-pink-500/30 font-['Outfit']">
-      <header className="fixed inset-x-0 top-0 z-40 flex items-center justify-between gap-3 border-b border-white/10 bg-[#050510]/60 px-4 py-3 shadow-lg backdrop-blur-xl lg:hidden">
+    <div className={`relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-[#050510] dark:via-[#0a0a1a] dark:to-[#0f0b1a] text-slate-800 dark:text-white selection:bg-pink-500/30 font-['Outfit'] transition-colors duration-500`}>
+      <header className="fixed inset-x-0 top-0 z-40 flex items-center justify-between gap-3 border-b border-black/5 dark:border-white/10 bg-white/60 dark:bg-[#050510]/60 px-4 py-3 shadow-lg backdrop-blur-xl lg:hidden">
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="rounded-full bg-gradient-to-r from-pink-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-pink-500/20 hover:shadow-pink-500/40 transition active:scale-95"
+          className="rounded-full bg-gradient-to-r from-pink-500 to-violet-500 dark:from-pink-600 dark:to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-pink-500/20 hover:shadow-pink-500/40 transition active:scale-95"
           aria-label="Toggle menu"
         >
           {sidebarOpen ? "Close" : "Menu"}
@@ -210,13 +225,13 @@ export default function App() {
       )}
 
       <aside className={`fixed inset-y-0 left-0 z-40 transform glass-panel border-l-0 border-t-0 border-b-0 transition-all duration-300 ease-in-out w-72 flex flex-col ${sidebarWidthClass} ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:fixed lg:top-0 lg:left-0 lg:bottom-0 lg:h-screen`}>
-        <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-5 shrink-0">
+        <div className="flex items-center justify-between gap-3 border-b border-black/5 dark:border-white/10 px-5 py-5 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="text-2xl drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]">🛡️</div>
+            <div className="text-2xl drop-shadow-[0_0_8px_rgba(236,72,153,0.5)] dark:drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]">🛡️</div>
             {!sidebarCollapsed && (
               <div>
-                <h1 className="text-xl font-bold tracking-tight text-white">SafeHer <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-violet-400">AI</span></h1>
-                <p className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold mt-0.5">Predict. Alert. Protect.</p>
+                <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white">SafeHer <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-violet-500 dark:from-pink-400 dark:to-violet-400">AI</span></h1>
+                <p className="text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 font-semibold mt-0.5">Predict. Alert. Protect.</p>
               </div>
             )}
           </div>
@@ -224,14 +239,14 @@ export default function App() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSidebarCollapsed((prev) => !prev)}
-              className="rounded-full bg-white/5 border border-white/10 px-3 py-2 text-sm font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white"
+              className="rounded-full bg-slate-200/50 dark:bg-white/5 border border-black/5 dark:border-white/10 px-3 py-2 text-sm font-semibold text-slate-500 dark:text-slate-300 transition hover:bg-slate-300/50 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white"
               aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {sidebarCollapsed ? "➡️" : "⬅️"}
             </button>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden rounded-full bg-white/5 border border-white/10 px-3 py-2 text-sm font-semibold text-slate-300 hover:bg-white/10 hover:text-white"
+              className="lg:hidden rounded-full bg-slate-200/50 dark:bg-white/5 border border-black/5 dark:border-white/10 px-3 py-2 text-sm font-semibold text-slate-500 dark:text-slate-300 hover:bg-slate-300/50 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white"
               aria-label="Close sidebar"
             >
               ✕
@@ -247,23 +262,30 @@ export default function App() {
               title={item.label}
               className={`group flex w-full ${sidebarCollapsed ? "justify-center" : "items-center"} gap-4 rounded-2xl px-4 py-3.5 text-left transition-all duration-300 ${
                 page === item.id
-                  ? "bg-gradient-to-r from-pink-500/20 to-violet-500/20 text-white ring-1 ring-pink-500/50 shadow-[0_0_15px_rgba(236,72,153,0.15)]"
-                  : "text-slate-400 hover:bg-white/5 hover:text-white"
+                  ? "bg-gradient-to-r from-pink-500/10 to-violet-500/10 dark:from-pink-500/20 dark:to-violet-500/20 text-slate-800 dark:text-white ring-1 ring-pink-400/50 dark:ring-pink-500/50 shadow-[0_0_15px_rgba(236,72,153,0.1)] dark:shadow-[0_0_15px_rgba(236,72,153,0.15)]"
+                  : "text-slate-500 dark:text-slate-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-white"
               }`}
             >
-              <span className={`text-xl transition-transform duration-300 ${page === item.id ? "scale-110 drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]" : "group-hover:scale-110"}`}>{item.icon}</span>
+              <span className={`text-xl transition-transform duration-300 ${page === item.id ? "scale-110 drop-shadow-[0_0_5px_rgba(236,72,153,0.3)] dark:drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]" : "group-hover:scale-110"}`}>{item.icon}</span>
               {!sidebarCollapsed && (
                 <div>
-                  <p className={`text-sm font-semibold tracking-wide ${page === item.id ? "text-white" : "text-slate-300 group-hover:text-white"}`}>{item.label}</p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">{item.desc}</p>
+                  <p className={`text-sm font-semibold tracking-wide ${page === item.id ? "text-slate-800 dark:text-white" : "text-slate-600 dark:text-slate-300 group-hover:text-slate-800 dark:group-hover:text-white"}`}>{item.label}</p>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">{item.desc}</p>
                 </div>
               )}
             </button>
           ))}
         </nav>
 
-        <div className={`border-t border-white/10 shrink-0 ${sidebarCollapsed ? "px-2 py-4" : "px-5 py-6"} bg-black/20`}>
+        <div className={`border-t border-black/5 dark:border-white/10 shrink-0 ${sidebarCollapsed ? "px-2 py-4" : "px-5 py-6"} bg-slate-100/50 dark:bg-black/20`}>
           <div className="space-y-4">
+            <button
+              onClick={toggleTheme}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-200/80 dark:bg-white/5 border border-black/5 dark:border-white/10 px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white transition-all"
+            >
+              {theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
+            </button>
+
             <button
               onClick={promptInstall}
               className="w-full glass-button rounded-xl px-4 py-3.5 text-sm font-bold text-white"
@@ -275,19 +297,19 @@ export default function App() {
         </div>
       </aside>
 
-      <header className="hidden lg:flex fixed inset-x-0 top-0 z-50 items-center justify-between border-b border-white/5 bg-[#050510]/40 px-8 py-4 shadow-xl backdrop-blur-xl pointer-events-none">
+      <header className="hidden lg:flex fixed inset-x-0 top-0 z-50 items-center justify-between border-b border-black/5 dark:border-white/5 bg-white/60 dark:bg-[#050510]/40 px-8 py-4 shadow-xl backdrop-blur-xl pointer-events-none">
         <div className="flex items-center gap-4">
-          <div className="text-2xl drop-shadow-[0_0_10px_rgba(236,72,153,0.8)] animate-pulse-slow">🛡️</div>
+          <div className="text-2xl drop-shadow-[0_0_10px_rgba(236,72,153,0.5)] dark:drop-shadow-[0_0_10px_rgba(236,72,153,0.8)] animate-pulse-slow">🛡️</div>
           <div>
-            <div className="text-sm font-bold uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-violet-400">SafeHer AI</div>
-            <div className="text-[10px] uppercase tracking-widest font-semibold text-slate-400 mt-0.5">Predict. Alert. Protect.</div>
+            <div className="text-sm font-bold uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-violet-500 dark:from-pink-400 dark:to-violet-400">SafeHer AI</div>
+            <div className="text-[10px] uppercase tracking-widest font-semibold text-slate-500 dark:text-slate-400 mt-0.5">Predict. Alert. Protect.</div>
           </div>
         </div>
         <div className="flex items-center gap-4 pointer-events-auto">
           {userInfo?.name && (
-            <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 backdrop-blur-md">
+            <div className="flex items-center gap-3 bg-slate-100/80 dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-full px-4 py-1.5 backdrop-blur-md">
               <span className="text-xl">👩🏽‍💻</span>
-              <span className="text-sm font-semibold text-white">{userInfo.name}</span>
+              <span className="text-sm font-semibold text-slate-800 dark:text-white">{userInfo.name}</span>
             </div>
           )}
         </div>
@@ -295,8 +317,8 @@ export default function App() {
 
       <main className={`relative min-h-screen overflow-x-hidden ${mainMarginClass} pt-16 lg:pt-24`}>
         {/* Main background glow effect */}
-        <div className="fixed top-[20%] left-[40%] w-[800px] h-[800px] bg-pink-600/10 rounded-full blur-[150px] pointer-events-none opacity-50" />
-        <div className="fixed top-[50%] left-[60%] w-[600px] h-[600px] bg-violet-600/10 rounded-full blur-[120px] pointer-events-none opacity-40" />
+        <div className="fixed top-[20%] left-[40%] w-[800px] h-[800px] bg-pink-300/30 dark:bg-pink-600/10 rounded-full blur-[150px] pointer-events-none opacity-50" />
+        <div className="fixed top-[50%] left-[60%] w-[600px] h-[600px] bg-violet-300/30 dark:bg-violet-600/10 rounded-full blur-[120px] pointer-events-none opacity-40" />
         
         <div className="relative z-10 p-4 lg:p-8">
           <PageComponent 

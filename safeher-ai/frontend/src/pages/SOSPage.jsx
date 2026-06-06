@@ -14,7 +14,7 @@ function RecenterMap({ pos }) {
   return null;
 }
 
-export default function SOSPage({ userInfo, onEditProfile }) {
+export default function SOSPage({ userInfo, onEditProfile, theme }) {
   const [pos,           setPos]           = useState(DEFAULT_POS);
   const [locationLabel, setLocationLabel] = useState("Detecting location…");
   const [locError,      setLocError]      = useState("");
@@ -135,8 +135,8 @@ export default function SOSPage({ userInfo, onEditProfile }) {
   return (
     <div className="flex flex-col gap-4 h-full">
       <div>
-        <h1 className="text-2xl font-bold text-white">SOS Emergency Alert</h1>
-        <p className="text-sm text-slate-400">One tap — your location reaches the nearest police station instantly</p>
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-white">SOS Emergency Alert</h1>
+        <p className="text-sm text-slate-600 dark:text-slate-400">One tap — your location reaches the nearest police station instantly</p>
       </div>
 
       {/* Location status banner */}
@@ -155,8 +155,8 @@ export default function SOSPage({ userInfo, onEditProfile }) {
           {station && (
             <div className="bg-blue-900/30 border border-blue-500/40 rounded-xl p-4">
               <p className="text-xs text-blue-400 font-semibold mb-1">NEAREST POLICE STATION</p>
-              <p className="text-white font-semibold">{station.name}</p>
-              <p className="text-slate-400 text-sm">{station.distance_km} km away · {station.contact}</p>
+              <p className="text-slate-800 dark:text-white font-semibold">{station.name}</p>
+              <p className="text-slate-600 dark:text-slate-400 text-sm">{station.distance_km} km away · {station.contact}</p>
             </div>
           )}
 
@@ -165,12 +165,12 @@ export default function SOSPage({ userInfo, onEditProfile }) {
               <p className="text-xs text-blue-300 font-semibold mb-3">ALL NEARBY POLICE STATIONS</p>
               <div className="space-y-3 max-h-64 overflow-y-auto">
                 {stations.map((s, i) => (
-                  <div key={s.id || i} className="rounded-xl bg-slate-900/60 p-3 border border-slate-700">
+                  <div key={s.id || i} className="rounded-xl bg-white/40 dark:bg-white/40 dark:bg-slate-900/60 p-3 border border-black/10 dark:border-slate-700">
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-white">{s.name}</p>
-                      <span className="text-xs text-slate-400">{s.distance_km} km</span>
+                      <p className="text-sm font-semibold text-slate-800 dark:text-white">{s.name}</p>
+                      <span className="text-xs text-slate-600 dark:text-slate-400">{s.distance_km} km</span>
                     </div>
-                    <p className="text-slate-400 text-xs mt-1">{s.contact}</p>
+                    <p className="text-slate-600 dark:text-slate-400 text-xs mt-1">{s.contact}</p>
                   </div>
                 ))}
               </div>
@@ -181,38 +181,38 @@ export default function SOSPage({ userInfo, onEditProfile }) {
             <div className="bg-green-900/30 border border-green-500/40 rounded-xl p-4">
               <p className="text-xs text-green-400 font-semibold mb-1">NEARBY HELPERS ({helpers.length})</p>
               {helpers.map((helper, i) => (
-                <div key={i} className="text-white text-sm">
+                <div key={i} className="text-slate-800 dark:text-white text-sm">
                   <p className="font-semibold">{helper.name}</p>
-                  <p className="text-slate-400">{helper.distance_km} km away</p>
+                  <p className="text-slate-600 dark:text-slate-400">{helper.distance_km} km away</p>
                 </div>
               ))}
             </div>
           )}
 
-          <div className="bg-slate-800/60 rounded-xl p-5 border border-slate-700 flex flex-col gap-4">
+          <div className="bg-white/60 dark:bg-white/60 dark:bg-slate-800/60 rounded-xl p-5 border border-black/10 dark:border-slate-700 flex flex-col gap-4">
             {userInfo ? (
               <div className="space-y-4">
-                <div className="rounded-xl bg-slate-900/50 p-4 border border-slate-700">
+                <div className="rounded-xl bg-white/40 dark:bg-white/40 dark:bg-slate-900/50 p-4 border border-black/10 dark:border-slate-700">
                   <p className="text-xs uppercase tracking-wide text-slate-500">Using saved profile</p>
-                  <p className="text-sm text-white mt-3">Name: <span className="text-slate-300">{userInfo.name}</span></p>
-                  <p className="text-sm text-white">Emergency contact: <span className="text-slate-300">{userInfo.emergency_contact}</span></p>
-                  <p className="text-sm text-white">Medical details: <span className="text-slate-300">{userInfo.medical_details || "None"}</span></p>
+                  <p className="text-sm text-slate-800 dark:text-white mt-3">Name: <span className="text-slate-700 dark:text-slate-300">{userInfo.name}</span></p>
+                  <p className="text-sm text-slate-800 dark:text-white">Emergency contact: <span className="text-slate-700 dark:text-slate-300">{userInfo.emergency_contact}</span></p>
+                  <p className="text-sm text-slate-800 dark:text-white">Medical details: <span className="text-slate-700 dark:text-slate-300">{userInfo.medical_details || "None"}</span></p>
                 </div>
                 <button
                   type="button"
                   onClick={onEditProfile}
-                  className="w-full py-3 rounded-xl border border-slate-600 text-slate-200 text-sm hover:bg-slate-700 transition"
+                  className="w-full py-3 rounded-xl border border-black/20 dark:border-slate-600 text-slate-800 dark:text-slate-200 text-sm hover:bg-slate-200 dark:bg-slate-700 transition"
                 >
                   Edit saved profile
                 </button>
               </div>
             ) : (
-              <div className="rounded-xl bg-yellow-900/30 border border-yellow-500/30 p-4 text-sm text-slate-200">
+              <div className="rounded-xl bg-yellow-900/30 border border-yellow-500/30 p-4 text-sm text-slate-800 dark:text-slate-200">
                 <p className="font-semibold text-yellow-200">No saved profile found.</p>
                 <p className="mt-2">Please set up your profile on the Profile Setup page before sending an SOS.</p>
                 <button
                   onClick={onEditProfile}
-                  className="mt-3 px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-500 text-white text-sm"
+                  className="mt-3 px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-500 text-slate-800 dark:text-white text-sm"
                 >
                   Go to Profile Setup
                 </button>
@@ -220,19 +220,19 @@ export default function SOSPage({ userInfo, onEditProfile }) {
             )}
 
             <div>
-              <label className="text-xs text-slate-400 block mb-1">Message (optional)</label>
+              <label className="text-xs text-slate-600 dark:text-slate-400 block mb-1">Message (optional)</label>
               <textarea
                 value={msg}
                 onChange={e => setMsg(e.target.value)}
                 placeholder="Describe your situation..."
                 rows={3}
-                className="w-full bg-slate-700 text-white rounded-lg px-3 py-2.5 text-sm border border-slate-600 focus:outline-none focus:border-pink-500 resize-none"
+                className="w-full bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white rounded-lg px-3 py-2.5 text-sm border border-black/20 dark:border-slate-600 focus:outline-none focus:border-pink-500 resize-none"
               />
             </div>
 
             <div>
-              <label className="text-xs text-slate-400 block mb-1">Your Location</label>
-              <p className="text-white font-mono text-sm">{pos[0].toFixed(5)}, {pos[1].toFixed(5)}</p>
+              <label className="text-xs text-slate-600 dark:text-slate-400 block mb-1">Your Location</label>
+              <p className="text-slate-800 dark:text-white font-mono text-sm">{pos[0].toFixed(5)}, {pos[1].toFixed(5)}</p>
               <p className="text-xs text-slate-500 mt-1">{locationLabel}</p>
             </div>
 
@@ -241,7 +241,7 @@ export default function SOSPage({ userInfo, onEditProfile }) {
             <button
               onClick={handleSOS}
               disabled={sending || !userInfo}
-              className={`w-full py-4 rounded-xl bg-red-600 hover:bg-red-500 active:scale-95 text-white text-lg font-bold disabled:opacity-50 transition transform flex items-center justify-center gap-2 ${sending ? 'animate-pulse-fast ring-pulse' : 'hover:ring-pulse'}`}
+              className={`w-full py-4 rounded-xl bg-red-600 hover:bg-red-500 active:scale-95 text-slate-800 dark:text-white text-lg font-bold disabled:opacity-50 transition transform flex items-center justify-center gap-2 ${sending ? 'animate-pulse-fast ring-pulse' : 'hover:ring-pulse'}`}
             >
               {sending ? "Sending…" : "🆘  SEND SOS ALERT"}
             </button>
@@ -250,16 +250,16 @@ export default function SOSPage({ userInfo, onEditProfile }) {
           {result && (
             <div className="bg-green-900/30 border border-green-500/40 rounded-xl p-5">
               <p className="text-green-400 font-bold text-lg mb-2">✅ Alert Dispatched!</p>
-              <div className="text-sm text-slate-300 space-y-1">
-                <p><span className="text-slate-400">Alert ID:</span> {result.alert_id}</p>
-                <p><span className="text-slate-400">Station:</span> {result.nearest_station?.name}</p>
-                <p><span className="text-slate-400">Distance:</span> {result.nearest_station?.distance_km} km</p>
-                <p><span className="text-slate-400">Emergency contact:</span> {result.emergency_contact || "N/A"}</p>
-                <p><span className="text-slate-400">Medical details:</span> {result.medical_details || "N/A"}</p>
+              <div className="text-sm text-slate-700 dark:text-slate-300 space-y-1">
+                <p><span className="text-slate-600 dark:text-slate-400">Alert ID:</span> {result.alert_id}</p>
+                <p><span className="text-slate-600 dark:text-slate-400">Station:</span> {result.nearest_station?.name}</p>
+                <p><span className="text-slate-600 dark:text-slate-400">Distance:</span> {result.nearest_station?.distance_km} km</p>
+                <p><span className="text-slate-600 dark:text-slate-400">Emergency contact:</span> {result.emergency_contact || "N/A"}</p>
+                <p><span className="text-slate-600 dark:text-slate-400">Medical details:</span> {result.medical_details || "N/A"}</p>
                 {result.nearest_helper && (
-                  <p><span className="text-slate-400">Nearest helper:</span> {result.nearest_helper.name} ({result.nearest_helper.distance_km} km)</p>
+                  <p><span className="text-slate-600 dark:text-slate-400">Nearest helper:</span> {result.nearest_helper.name} ({result.nearest_helper.distance_km} km)</p>
                 )}
-                <p><span className="text-slate-400">Est. Response:</span> ~{result.estimated_response_min} min</p>
+                <p><span className="text-slate-600 dark:text-slate-400">Est. Response:</span> ~{result.estimated_response_min} min</p>
                 <a
                   href={result.live_location_url}
                   target="_blank"
@@ -273,11 +273,11 @@ export default function SOSPage({ userInfo, onEditProfile }) {
           )}
 
           {log.length > 0 && (
-            <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700">
-              <p className="text-xs text-slate-400 font-semibold mb-3">RECENT ALERTS ({log.length})</p>
+            <div className="bg-white/60 dark:bg-white/60 dark:bg-slate-800/60 rounded-xl p-4 border border-black/10 dark:border-slate-700">
+              <p className="text-xs text-slate-600 dark:text-slate-400 font-semibold mb-3">RECENT ALERTS ({log.length})</p>
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {log.slice().reverse().map((a, i) => (
-                  <div key={i} className="flex justify-between text-xs text-slate-400 border-b border-slate-700 pb-1">
+                  <div key={i} className="flex justify-between text-xs text-slate-600 dark:text-slate-400 border-b border-black/10 dark:border-slate-700 pb-1">
                     <span>{a.alert_id} — {a.user}</span>
                     <span className="text-green-400">{a.status}</span>
                   </div>
@@ -288,7 +288,7 @@ export default function SOSPage({ userInfo, onEditProfile }) {
         </div>
 
         {/* Right — Map */}
-        <div className="rounded-2xl overflow-hidden border border-slate-700 h-[400px]">
+        <div className="rounded-2xl overflow-hidden border border-black/10 dark:border-slate-700 h-[400px]">
           <MapContainer
             center={pos}
             zoom={15}

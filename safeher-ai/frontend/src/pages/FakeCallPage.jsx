@@ -56,9 +56,9 @@ export default function FakeCallPage() {
 
   if (isRinging || isAnswered) {
     return (
-      <div className="absolute inset-0 z-50 bg-slate-900 flex flex-col items-center justify-between py-16 px-6 text-white">
+      <div className="absolute inset-0 z-50 bg-white/40 dark:bg-slate-900 flex flex-col items-center justify-between py-16 px-6 text-slate-800 dark:text-white">
         <div className="text-center mt-10">
-          <p className="text-xl text-slate-400 mb-2">
+          <p className="text-xl text-slate-600 dark:text-slate-400 mb-2">
             {isAnswered ? formatDuration(callDuration) : "Incoming call..."}
           </p>
           <h1 className="text-5xl font-semibold tracking-wide">{callerName}</h1>
@@ -94,28 +94,28 @@ export default function FakeCallPage() {
   return (
     <div className="flex flex-col gap-6 h-full">
       <div>
-        <h1 className="text-2xl font-bold text-white">Fake Call</h1>
-        <p className="text-sm text-slate-400">
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Fake Call</h1>
+        <p className="text-sm text-slate-600 dark:text-slate-400">
           Simulate an incoming call to help you exit an uncomfortable situation.
         </p>
       </div>
 
-      <div className="flex flex-col gap-4 rounded-3xl border border-slate-700/80 bg-slate-900/70 p-6">
+      <div className="flex flex-col gap-4 rounded-3xl border border-black/10 dark:border-slate-700/80 bg-white/40 dark:bg-white/40 dark:bg-slate-900/70 p-6">
         <div className="space-y-4">
           <div>
-            <label className="text-sm text-slate-400 uppercase tracking-wider font-semibold">
+            <label className="text-sm text-slate-600 dark:text-slate-400 uppercase tracking-wider font-semibold">
               Caller Name
             </label>
             <input
               type="text"
               value={callerName}
               onChange={(e) => setCallerName(e.target.value)}
-              className="mt-2 w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-pink-500"
+              className="mt-2 w-full bg-white/40 dark:bg-slate-950 border border-black/10 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-800 dark:text-white focus:outline-none focus:border-pink-500"
               placeholder="e.g. Dad, Mom, Roommate"
             />
           </div>
 
-          <p className="text-sm text-slate-400 uppercase tracking-wider font-semibold pt-4">
+          <p className="text-sm text-slate-600 dark:text-slate-400 uppercase tracking-wider font-semibold pt-4">
             Trigger Call In
           </p>
 
@@ -129,9 +129,9 @@ export default function FakeCallPage() {
               <button
                 key={opt.seconds}
                 onClick={() => startTimer(opt.seconds)}
-                className="bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-xl py-3 px-4 text-center transition"
+                className="bg-white/60 dark:bg-slate-800 hover:bg-slate-200 dark:bg-slate-700 border border-black/20 dark:border-slate-600 rounded-xl py-3 px-4 text-center transition"
               >
-                <span className="text-white font-medium">{opt.label}</span>
+                <span className="text-slate-800 dark:text-white font-medium">{opt.label}</span>
               </button>
             ))}
           </div>
@@ -143,7 +143,7 @@ export default function FakeCallPage() {
               </p>
               <button
                 onClick={stopCall}
-                className="mt-3 text-sm text-slate-400 hover:text-white underline"
+                className="mt-3 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:text-white underline"
               >
                 Cancel
               </button>

@@ -66,7 +66,7 @@ function LocationSearch({ label, value, onChange }) {
 
   return (
     <div className="relative">
-      <label className="text-xs text-slate-400 block mb-2">{label}</label>
+      <label className="text-xs text-slate-600 dark:text-slate-400 block mb-2">{label}</label>
       <input
         type="text"
         value={query}
@@ -74,16 +74,16 @@ function LocationSearch({ label, value, onChange }) {
         onFocus={() => { if (results.length > 0) setIsOpen(true); }}
         onBlur={() => setTimeout(() => setIsOpen(false), 200)}
         placeholder="Search location..."
-        className="w-full bg-slate-700 text-white rounded-lg px-3 py-2 text-sm border border-slate-600 focus:outline-none focus:border-pink-500 placeholder-slate-500"
+        className="w-full bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white rounded-lg px-3 py-2 text-sm border border-black/20 dark:border-slate-600 focus:outline-none focus:border-pink-500 placeholder-slate-500"
       />
-      {loading && <div className="absolute right-3 top-9 text-xs text-slate-400">...</div>}
+      {loading && <div className="absolute right-3 top-9 text-xs text-slate-600 dark:text-slate-400">...</div>}
       
       {isOpen && results.length > 0 && (
-        <div className="absolute z-[1000] top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-600 rounded-lg shadow-xl overflow-hidden max-h-48 overflow-y-auto">
+        <div className="absolute z-[1000] top-full left-0 right-0 mt-1 bg-white/60 dark:bg-slate-800 border border-black/20 dark:border-slate-600 rounded-lg shadow-xl overflow-hidden max-h-48 overflow-y-auto">
           {results.map((r, i) => (
             <div
               key={i}
-              className="px-3 py-2 text-sm text-slate-200 hover:bg-slate-700 cursor-pointer border-b border-slate-700/50 last:border-0 truncate"
+              className="px-3 py-2 text-sm text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:bg-slate-700 cursor-pointer border-b border-black/10 dark:border-slate-700/50 last:border-0 truncate"
               onClick={() => {
                 setQuery(r.name);
                 onChange(r);
@@ -99,7 +99,7 @@ function LocationSearch({ label, value, onChange }) {
   );
 }
 
-export default function RoutePage() {
+export default function RoutePage({ theme }) {
   const [start, setStart] = useState({ name: "Koramangala, Bengaluru", lat: 12.9352, lng: 77.6245 });
   const [end, setEnd] = useState({ name: "MG Road, Bengaluru", lat: 12.9758, lng: 77.6065 });
   const [hour, setHour] = useState(new Date().getHours());
@@ -284,31 +284,31 @@ export default function RoutePage() {
   return (
     <div className="flex flex-col gap-4 h-full">
       <div>
-        <h1 className="text-2xl font-bold text-white">Safe Route Finder</h1>
-        <p className="text-sm text-slate-400">Compare routes and find the safest path to your destination</p>
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Safe Route Finder</h1>
+        <p className="text-sm text-slate-600 dark:text-slate-400">Compare routes and find the safest path to your destination</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700 relative z-50">
+        <div className="bg-white/60 dark:bg-white/60 dark:bg-slate-800/60 rounded-xl p-4 border border-black/10 dark:border-slate-700 relative z-50">
           <LocationSearch label="📍 Start" value={start} onChange={setStart} />
         </div>
 
-        <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700 relative z-40">
+        <div className="bg-white/60 dark:bg-white/60 dark:bg-slate-800/60 rounded-xl p-4 border border-black/10 dark:border-slate-700 relative z-40">
           <LocationSearch label="🏁 End" value={end} onChange={setEnd} />
         </div>
 
-        <div className="bg-slate-800/60 rounded-3xl p-4 border border-slate-700/90 relative z-10">
+        <div className="bg-white/60 dark:bg-white/60 dark:bg-slate-800/60 rounded-3xl p-4 border border-black/10 dark:border-slate-700/90 relative z-10">
           <div className="flex items-center justify-between gap-3 mb-3">
             <div>
-              <p className="text-xs text-slate-400 uppercase tracking-[0.16em]">Departure time</p>
-              <p className="text-sm text-white">Plan for the safest hour</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400 uppercase tracking-[0.16em]">Departure time</p>
+              <p className="text-sm text-slate-800 dark:text-white">Plan for the safest hour</p>
             </div>
             <span className="rounded-full bg-pink-500/15 px-3 py-1 text-sm font-semibold text-pink-200">Selected: {String(hour).padStart(2, "0")}:00</span>
           </div>
           <div className="space-y-3">
-            <div className="rounded-3xl bg-slate-950/70 border border-slate-700 p-5 text-center">
-              <p className="text-xs text-slate-400 uppercase tracking-[0.14em]">Current time</p>
-              <p className="text-4xl font-bold text-white mt-3">{currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>
+            <div className="rounded-3xl bg-white/40 dark:bg-white/40 dark:bg-slate-950/70 border border-black/10 dark:border-slate-700 p-5 text-center">
+              <p className="text-xs text-slate-600 dark:text-slate-400 uppercase tracking-[0.14em]">Current time</p>
+              <p className="text-4xl font-bold text-slate-800 dark:text-white mt-3">{currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>
               <p className="text-xs text-slate-500 mt-3 uppercase tracking-[0.14em]">Selected hour</p>
               <p className="text-xl font-semibold text-pink-300 mt-1">{String(hour).padStart(2, "0")}:00</p>
             </div>
@@ -332,11 +332,11 @@ export default function RoutePage() {
           </div>
         </div>
 
-        <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700 flex items-end relative z-10">
+        <div className="bg-white/60 dark:bg-white/60 dark:bg-slate-800/60 rounded-xl p-4 border border-black/10 dark:border-slate-700 flex items-end relative z-10">
           <button
             onClick={handleFind}
             disabled={loading}
-            className="w-full py-2.5 rounded-lg bg-pink-600 hover:bg-pink-500 text-white font-semibold text-sm disabled:opacity-50 transition"
+            className="w-full py-2.5 rounded-lg bg-pink-600 hover:bg-pink-500 text-slate-800 dark:text-white font-semibold text-sm disabled:opacity-50 transition"
           >
             {loading ? "Finding Routes…" : "Find Safe Route"}
           </button>
@@ -356,16 +356,16 @@ export default function RoutePage() {
               <div
                 key={i}
                 onClick={() => setSelectedRoute(i)}
-                className={`rounded-xl p-4 border cursor-pointer transition-all ${c.bg} ${isSelected ? c.border + " ring-2 ring-pink-500" : "border-slate-700"}`}
+                className={`rounded-xl p-4 border cursor-pointer transition-all ${c.bg} ${isSelected ? c.border + " ring-2 ring-pink-500" : "border-black/10 dark:border-slate-700"}`}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-slate-400 font-medium">
+                  <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">
                     Route {i + 1} {route.is_safest ? "⭐ Safest" : ""}
                   </span>
                   <span className={`text-2xl font-bold ${c.text}`}>{route.score}</span>
                 </div>
                 <p className={`text-sm font-semibold ${c.text} mb-1`}>{route.label}</p>
-                <div className="flex items-center justify-between text-xs text-slate-400">
+                <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
                   <span>Avg Risk: {route.avg_risk}/5</span>
                   {route.distance_m && (
                     <span>{(route.distance_m / 1000).toFixed(1)} km · {Math.round(route.duration_s / 60)} min</span>
@@ -384,7 +384,7 @@ export default function RoutePage() {
             <p className={`text-xl font-bold ${SCORE_COLOR(safest.score).text}`}>
               Route Safety: {safest.score}/100
             </p>
-            <p className="text-white font-semibold mt-1">
+            <p className="text-slate-800 dark:text-white font-semibold mt-1">
               Recommended: Route {routes.indexOf(safest) + 1} — {start.name.split(',')[0]} → {end.name.split(',')[0]}
             </p>
             <p className={`text-sm ${SCORE_COLOR(safest.score).text}`}>
@@ -395,14 +395,14 @@ export default function RoutePage() {
               {!isVoiceOn ? (
                 <button
                   onClick={startVoiceNavigation}
-                  className="px-3 py-1 rounded-lg bg-pink-600 hover:bg-pink-500 text-white text-sm font-semibold"
+                  className="px-3 py-1 rounded-lg bg-pink-600 hover:bg-pink-500 text-slate-800 dark:text-white text-sm font-semibold"
                 >
                   ▶ Start Voice Nav
                 </button>
               ) : (
                 <button
                   onClick={stopVoiceNavigation}
-                  className="px-3 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold"
+                  className="px-3 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-600 text-slate-800 dark:text-white text-sm font-semibold"
                 >
                   ■ Stop Voice Nav
                 </button>
@@ -410,7 +410,7 @@ export default function RoutePage() {
 
               <button
                 onClick={() => { const steps = buildSteps(safest); if (steps.length) speak(`Summary: ${safest.label}. Safety ${safest.score} out of 100.`); }}
-                className="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm border border-slate-700"
+                className="px-3 py-1 rounded-lg bg-white/60 dark:bg-slate-800 hover:bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white text-sm border border-black/10 dark:border-slate-700"
               >
                 🔊 Speak Summary
               </button>
@@ -418,7 +418,7 @@ export default function RoutePage() {
               <button
                 onClick={speakPrevStep}
                 disabled={!isVoiceOn}
-                className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm border border-slate-700 disabled:opacity-40"
+                className="px-2 py-1 rounded-lg bg-white/60 dark:bg-slate-800 hover:bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white text-sm border border-black/10 dark:border-slate-700 disabled:opacity-40"
               >
                 ← Prev
               </button>
@@ -426,7 +426,7 @@ export default function RoutePage() {
               <button
                 onClick={speakNextStep}
                 disabled={!isVoiceOn}
-                className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm border border-slate-700 disabled:opacity-40"
+                className="px-2 py-1 rounded-lg bg-white/60 dark:bg-slate-800 hover:bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white text-sm border border-black/10 dark:border-slate-700 disabled:opacity-40"
               >
                 Next →
               </button>
@@ -435,7 +435,7 @@ export default function RoutePage() {
         </div>
       )}
 
-      <div className="flex-1 rounded-2xl overflow-hidden border border-slate-700 h-[400px] relative z-0">
+      <div className="flex-1 rounded-2xl overflow-hidden border border-black/10 dark:border-slate-700 h-[400px] relative z-0">
         <MapContainer center={DEFAULT_CENTER} zoom={13} style={{ height: "400px", width: "100%" }}>
           <TileLayer
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
