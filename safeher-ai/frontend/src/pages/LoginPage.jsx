@@ -121,6 +121,7 @@ export default function LoginPage({ onLoginSuccess }) {
                   className="w-full bg-slate-100/50 dark:bg-white/5 border border-black/10 dark:border-white/10 text-slate-800 dark:text-white rounded-xl py-4 px-4 text-center text-3xl tracking-[0.5em] font-mono focus:outline-none focus:ring-2 focus:ring-pink-400/50 dark:focus:ring-pink-500/50 focus:bg-white dark:focus:bg-white/10 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
                 />
               </div>
+              </div>
               <button
                 type="submit"
                 disabled={loading}
