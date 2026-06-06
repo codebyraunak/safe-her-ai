@@ -270,7 +270,7 @@ export default function App() {
               {!sidebarCollapsed && (
                 <div>
                   <p className={`text-sm font-semibold tracking-wide ${page === item.id ? "text-slate-800 dark:text-white" : "text-slate-600 dark:text-slate-300 group-hover:text-slate-800 dark:group-hover:text-white"}`}>{item.label}</p>
-                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">{item.desc}</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{item.desc}</p>
                 </div>
               )}
             </button>

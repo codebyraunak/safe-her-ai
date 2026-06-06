@@ -140,7 +140,7 @@ export default function LightingPage({ theme }) {
           <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Smart Street Lighting</h1>
           <p className="text-sm text-slate-600 dark:text-slate-400">Street light operational status — showing working, broken, and missing lights.</p>
         </div>
-        <div className="grid gap-4 md:grid-cols-[1.6fr_0.9fr] items-center rounded-3xl border border-black/10 dark:border-slate-700/80 bg-white/40 dark:bg-white/40 dark:bg-slate-900/70 p-4 shadow-xl shadow-slate-950/20">
+        <div className="grid gap-4 md:grid-cols-[1.6fr_0.9fr] items-center rounded-3xl border border-black/10 dark:border-slate-700/80 bg-white/40 dark:bg-slate-900/70 p-4 shadow-xl shadow-slate-950/20">
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -172,8 +172,8 @@ export default function LightingPage({ theme }) {
             </div>
           </div>
 
-          <div className="flex flex-col justify-center gap-3 rounded-3xl border border-black/10 dark:border-slate-700/80 bg-white/40 dark:bg-white/40 dark:bg-slate-950/60 p-4">
-            <div className="rounded-3xl bg-white/40 dark:bg-white/40 dark:bg-slate-900/80 p-5 border border-black/10 dark:border-slate-700 text-center">
+          <div className="flex flex-col justify-center gap-3 rounded-3xl border border-black/10 dark:border-slate-700/80 bg-white/40 dark:bg-slate-950/60 p-4">
+            <div className="rounded-3xl bg-white/40 dark:bg-slate-900/80 p-5 border border-black/10 dark:border-slate-700 text-center">
               <p className="text-xs text-slate-600 dark:text-slate-400 uppercase tracking-[0.16em]">Current time</p>
               <p className="text-4xl font-bold text-slate-800 dark:text-white mt-3">{currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>
               <p className="text-xs text-slate-500 mt-3 uppercase tracking-[0.16em]">Selected hour</p>
@@ -212,7 +212,7 @@ export default function LightingPage({ theme }) {
           { label: "No Street Lights",   value: savings?.no_light_count ?? "—",   color: "text-slate-600 dark:text-slate-400" },
           { label: "Total Zones",        value: savings?.total_zones ?? "—",       color: "text-slate-800 dark:text-white" },
         ].map(s => (
-          <div key={s.label} className="bg-white/60 dark:bg-white/60 dark:bg-slate-800/60 rounded-xl p-4 border border-black/10 dark:border-slate-700">
+          <div key={s.label} className="bg-white/60 dark:bg-slate-800/60 rounded-xl p-4 border border-black/10 dark:border-slate-700">
             <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
             <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{s.label}</p>
           </div>
@@ -257,7 +257,7 @@ export default function LightingPage({ theme }) {
 
       {/* Saving breakdown */}
       {savings && (
-        <div className="bg-white/60 dark:bg-white/60 dark:bg-slate-800/60 rounded-xl p-4 border border-black/10 dark:border-slate-700">
+        <div className="bg-white/60 dark:bg-slate-800/60 rounded-xl p-4 border border-black/10 dark:border-slate-700">
           <p className="text-sm font-semibold text-slate-800 dark:text-white mb-3">City-wide Street Light Status ({savings.total_zones} zones)</p>
           <div className="flex gap-4 flex-wrap">
             {Object.entries(savings.status_breakdown).map(([status, count]) => (

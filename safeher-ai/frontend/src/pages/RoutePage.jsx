@@ -289,15 +289,15 @@ export default function RoutePage({ theme }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        <div className="bg-white/60 dark:bg-white/60 dark:bg-slate-800/60 rounded-xl p-4 border border-black/10 dark:border-slate-700 relative z-50">
+        <div className="bg-white/60 dark:bg-slate-800/60 rounded-xl p-4 border border-black/10 dark:border-slate-700 relative z-50">
           <LocationSearch label="📍 Start" value={start} onChange={setStart} />
         </div>
 
-        <div className="bg-white/60 dark:bg-white/60 dark:bg-slate-800/60 rounded-xl p-4 border border-black/10 dark:border-slate-700 relative z-40">
+        <div className="bg-white/60 dark:bg-slate-800/60 rounded-xl p-4 border border-black/10 dark:border-slate-700 relative z-40">
           <LocationSearch label="🏁 End" value={end} onChange={setEnd} />
         </div>
 
-        <div className="bg-white/60 dark:bg-white/60 dark:bg-slate-800/60 rounded-3xl p-4 border border-black/10 dark:border-slate-700/90 relative z-10">
+        <div className="bg-white/60 dark:bg-slate-800/60 rounded-3xl p-4 border border-black/10 dark:border-slate-700/90 relative z-10">
           <div className="flex items-center justify-between gap-3 mb-3">
             <div>
               <p className="text-xs text-slate-600 dark:text-slate-400 uppercase tracking-[0.16em]">Departure time</p>
@@ -306,7 +306,7 @@ export default function RoutePage({ theme }) {
             <span className="rounded-full bg-pink-500/15 px-3 py-1 text-sm font-semibold text-pink-200">Selected: {String(hour).padStart(2, "0")}:00</span>
           </div>
           <div className="space-y-3">
-            <div className="rounded-3xl bg-white/40 dark:bg-white/40 dark:bg-slate-950/70 border border-black/10 dark:border-slate-700 p-5 text-center">
+            <div className="rounded-3xl bg-white/40 dark:bg-slate-950/70 border border-black/10 dark:border-slate-700 p-5 text-center">
               <p className="text-xs text-slate-600 dark:text-slate-400 uppercase tracking-[0.14em]">Current time</p>
               <p className="text-4xl font-bold text-slate-800 dark:text-white mt-3">{currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>
               <p className="text-xs text-slate-500 mt-3 uppercase tracking-[0.14em]">Selected hour</p>
@@ -332,7 +332,7 @@ export default function RoutePage({ theme }) {
           </div>
         </div>
 
-        <div className="bg-white/60 dark:bg-white/60 dark:bg-slate-800/60 rounded-xl p-4 border border-black/10 dark:border-slate-700 flex items-end relative z-10">
+        <div className="bg-white/60 dark:bg-slate-800/60 rounded-xl p-4 border border-black/10 dark:border-slate-700 flex items-end relative z-10">
           <button
             onClick={handleFind}
             disabled={loading}

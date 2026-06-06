@@ -313,7 +313,7 @@ export default function HeatmapPage({ userInfo, theme }) {
           <p className="text-sm text-slate-600 dark:text-slate-400">AI-predicted risk zones — updated in real time</p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-[1.4fr_0.9fr] items-center rounded-3xl border border-black/10 dark:border-slate-700/80 bg-white/40 dark:bg-white/40 dark:bg-slate-900/70 p-4 shadow-xl shadow-slate-950/30">
+        <div className="grid gap-4 md:grid-cols-[1.4fr_0.9fr] items-center rounded-3xl border border-black/10 dark:border-slate-700/80 bg-white/40 dark:bg-slate-900/70 p-4 shadow-xl shadow-slate-950/30">
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -337,8 +337,8 @@ export default function HeatmapPage({ userInfo, theme }) {
             </div>
           </div>
 
-          <div className="flex flex-col justify-center gap-3 rounded-3xl border border-black/10 dark:border-slate-700/80 bg-white/40 dark:bg-white/40 dark:bg-slate-950/60 p-4">
-            <div className="rounded-3xl bg-white/40 dark:bg-white/40 dark:bg-slate-900/80 p-5 border border-black/10 dark:border-slate-700 text-center">
+          <div className="flex flex-col justify-center gap-3 rounded-3xl border border-black/10 dark:border-slate-700/80 bg-white/40 dark:bg-slate-950/60 p-4">
+            <div className="rounded-3xl bg-white/40 dark:bg-slate-900/80 p-5 border border-black/10 dark:border-slate-700 text-center">
               <p className="text-xs text-slate-600 dark:text-slate-400 uppercase tracking-[0.16em]">Current time</p>
               <p className="text-4xl font-bold text-slate-800 dark:text-white mt-3">{currentTimeLabel}</p>
               <p className="text-xs text-slate-500 mt-3 uppercase tracking-[0.16em]">Displayed data hour</p>
@@ -488,13 +488,13 @@ export default function HeatmapPage({ userInfo, theme }) {
         <div className="absolute top-4 right-4 z-[400] flex flex-col items-end">
           <button
             onClick={() => setShowFeed(!showFeed)}
-            className="mb-2 rounded-xl bg-white/40 dark:bg-white/40 dark:bg-slate-900/90 border border-black/10 dark:border-slate-700 px-4 py-2 text-sm font-semibold text-slate-800 dark:text-white shadow-xl backdrop-blur-md hover:bg-white/60 dark:bg-slate-800 transition"
+            className="mb-2 rounded-xl bg-white/40 dark:bg-slate-900/90 border border-black/10 dark:border-slate-700 px-4 py-2 text-sm font-semibold text-slate-800 dark:text-white shadow-xl backdrop-blur-md hover:bg-white/60 dark:bg-slate-800 transition"
           >
             {showFeed ? "Hide Activity Feed" : "Live Activity Feed 🔔"}
           </button>
           {showFeed && (
-            <div className="w-80 max-h-96 overflow-y-auto rounded-2xl bg-white/40 dark:bg-white/40 dark:bg-slate-900/95 border border-black/10 dark:border-slate-700 shadow-2xl backdrop-blur-xl p-4 flex flex-col gap-3">
-              <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1 sticky top-0 bg-white/40 dark:bg-white/40 dark:bg-slate-900/95 pb-2">
+            <div className="w-80 max-h-96 overflow-y-auto rounded-2xl bg-white/40 dark:bg-slate-900/95 border border-black/10 dark:border-slate-700 shadow-2xl backdrop-blur-xl p-4 flex flex-col gap-3">
+              <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1 sticky top-0 bg-white/40 dark:bg-slate-900/95 pb-2">
                 Recent Reports
               </h3>
               {incidents.length === 0 ? (
@@ -521,7 +521,7 @@ export default function HeatmapPage({ userInfo, theme }) {
           { label: "DBSCAN Hotspots", value: hotspots.length,                        color: "text-amber-400"   },
           { label: "Smart Check",     value: homeSaved ? "Ready" : "Setup required", color: homeSaved ? "text-emerald-400" : "text-slate-600 dark:text-slate-400" },
         ].map(s => (
-          <div key={s.label} className="bg-white/60 dark:bg-white/60 dark:bg-slate-800/60 rounded-xl p-4 border border-black/10 dark:border-slate-700">
+          <div key={s.label} className="bg-white/60 dark:bg-slate-800/60 rounded-xl p-4 border border-black/10 dark:border-slate-700">
             <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
             <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{s.label}</p>
           </div>
@@ -529,7 +529,7 @@ export default function HeatmapPage({ userInfo, theme }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="bg-white/60 dark:bg-white/60 dark:bg-slate-800/60 rounded-xl p-4 border border-black/10 dark:border-slate-700">
+        <div className="bg-white/60 dark:bg-slate-800/60 rounded-xl p-4 border border-black/10 dark:border-slate-700">
           <p className="text-xs text-slate-600 dark:text-slate-400">Nearest helper</p>
           <p className="text-2xl font-bold text-slate-800 dark:text-white mt-2">
             {nearestHelper ? `${nearestHelper.name} (${nearestHelper.distance_km} km)` : "No helper nearby"}

@@ -122,8 +122,8 @@ export default function SmartCheckPage({ userInfo, onEditProfile, monitor, isSub
       )}
 
       <div className={`grid grid-cols-1 ${isSubComponent ? '' : 'lg:grid-cols-2'} gap-4 flex-1`}>
-        <div className="bg-white/60 dark:bg-white/60 dark:bg-slate-800/60 rounded-2xl p-6 border border-black/10 dark:border-slate-700 space-y-4">
-          <div className="rounded-2xl bg-white/40 dark:bg-white/40 dark:bg-slate-900/50 p-4 border border-black/10 dark:border-slate-700 space-y-3">
+        <div className="bg-white/60 dark:bg-slate-800/60 rounded-2xl p-6 border border-black/10 dark:border-slate-700 space-y-4">
+          <div className="rounded-2xl bg-white/40 dark:bg-slate-900/50 p-4 border border-black/10 dark:border-slate-700 space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-sm text-slate-600 dark:text-slate-400">Home location</p>
               {homePos && !editingHome && (
@@ -173,7 +173,7 @@ export default function SmartCheckPage({ userInfo, onEditProfile, monitor, isSub
             )}
           </div>
 
-          <div className="rounded-2xl bg-white/40 dark:bg-white/40 dark:bg-slate-900/50 p-4 border border-black/10 dark:border-slate-700">
+          <div className="rounded-2xl bg-white/40 dark:bg-slate-900/50 p-4 border border-black/10 dark:border-slate-700">
             <p className="text-sm text-slate-600 dark:text-slate-400">Current position</p>
             <p className="text-slate-800 dark:text-white mt-2">{currentPos[0].toFixed(5)}, {currentPos[1].toFixed(5)}</p>
             <p className="text-xs text-slate-500 mt-2">
@@ -208,7 +208,7 @@ export default function SmartCheckPage({ userInfo, onEditProfile, monitor, isSub
             </button>
           </div>
 
-          <div className="rounded-2xl bg-white/40 dark:bg-white/40 dark:bg-slate-900/50 p-4 border border-black/10 dark:border-slate-700">
+          <div className="rounded-2xl bg-white/40 dark:bg-slate-900/50 p-4 border border-black/10 dark:border-slate-700">
             <p className="text-sm text-slate-600 dark:text-slate-400">Timer Duration</p>
             <div className="flex items-center gap-3 mt-3">
               <input
@@ -231,7 +231,7 @@ export default function SmartCheckPage({ userInfo, onEditProfile, monitor, isSub
             <p className="text-xs text-slate-500 mt-2">Set how long to wait before triggering an alert if you don't confirm safety.</p>
           </div>
 
-          <div className="rounded-2xl bg-white/40 dark:bg-white/40 dark:bg-slate-900/50 p-4 border border-black/10 dark:border-slate-700">
+          <div className="rounded-2xl bg-white/40 dark:bg-slate-900/50 p-4 border border-black/10 dark:border-slate-700">
             <p className="text-sm text-slate-600 dark:text-slate-400">Timer</p>
             <div className="flex items-center justify-center mt-3">
               <div className="relative">
@@ -290,7 +290,7 @@ export default function SmartCheckPage({ userInfo, onEditProfile, monitor, isSub
           )}
         </div>
 
-        <div className="bg-white/60 dark:bg-white/60 dark:bg-slate-800/60 rounded-2xl p-6 border border-black/10 dark:border-slate-700">
+        <div className="bg-white/60 dark:bg-slate-800/60 rounded-2xl p-6 border border-black/10 dark:border-slate-700">
           <p className="text-sm text-slate-600 dark:text-slate-400">Smart Check alert history</p>
           {sc.result ? (
             <div className="mt-4 rounded-2xl bg-green-900/30 border border-green-500/30 p-4 text-sm text-slate-800 dark:text-slate-200 space-y-2">
@@ -301,12 +301,12 @@ export default function SmartCheckPage({ userInfo, onEditProfile, monitor, isSub
               <p>Medical: {sc.result.medical_details || "N/A"}</p>
             </div>
           ) : (
-            <div className="mt-4 rounded-2xl bg-white/40 dark:bg-white/40 dark:bg-slate-900/30 border border-black/10 dark:border-slate-700 p-4 text-sm text-slate-600 dark:text-slate-400">
+            <div className="mt-4 rounded-2xl bg-white/40 dark:bg-slate-900/30 border border-black/10 dark:border-slate-700 p-4 text-sm text-slate-600 dark:text-slate-400">
               No Smart Check alert has been triggered yet.
             </div>
           )}
 
-          <div className="mt-6 rounded-2xl bg-white/40 dark:bg-white/40 dark:bg-slate-900/30 border border-black/10 dark:border-slate-700 p-4 text-sm text-slate-600 dark:text-slate-400">
+          <div className="mt-6 rounded-2xl bg-white/40 dark:bg-slate-900/30 border border-black/10 dark:border-slate-700 p-4 text-sm text-slate-600 dark:text-slate-400">
             <p className="font-semibold">How it works</p>
             <ul className="mt-3 space-y-2 list-disc list-inside text-slate-600 dark:text-slate-400">
               <li>Save your home location.</li>

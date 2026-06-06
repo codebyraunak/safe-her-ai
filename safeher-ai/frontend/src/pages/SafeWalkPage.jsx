@@ -118,7 +118,7 @@ export default function SafeWalkPage({ userInfo, monitor, isSubComponent }) {
       )}
 
       {!sw.active ? (
-        <div className="bg-white/40 dark:bg-white/40 dark:bg-slate-900/80 border border-black/10 dark:border-slate-700 rounded-2xl p-6 mt-4 shadow-xl">
+        <div className="bg-white/40 dark:bg-slate-900/80 border border-black/10 dark:border-slate-700 rounded-2xl p-6 mt-4 shadow-xl">
           <div className="space-y-5">
             <div>
               <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1">Where are you heading?</label>
@@ -135,7 +135,7 @@ export default function SafeWalkPage({ userInfo, monitor, isSubComponent }) {
           </div>
         </div>
       ) : (
-        <div className="bg-white/40 dark:bg-white/40 dark:bg-slate-900/80 border border-emerald-500/50 rounded-2xl p-6 mt-4 shadow-2xl text-center flex flex-col items-center">
+        <div className="bg-white/40 dark:bg-slate-900/80 border border-emerald-500/50 rounded-2xl p-6 mt-4 shadow-2xl text-center flex flex-col items-center">
           <div className="relative w-20 h-20 rounded-full bg-emerald-500/20 flex items-center justify-center mb-4">
             <div className="absolute w-16 h-16 rounded-full bg-emerald-500/40 animate-ping" />
             <span className="relative text-2xl">🛡️</span>

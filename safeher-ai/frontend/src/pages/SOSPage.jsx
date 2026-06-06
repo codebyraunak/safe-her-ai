@@ -165,7 +165,7 @@ export default function SOSPage({ userInfo, onEditProfile, theme }) {
               <p className="text-xs text-blue-300 font-semibold mb-3">ALL NEARBY POLICE STATIONS</p>
               <div className="space-y-3 max-h-64 overflow-y-auto">
                 {stations.map((s, i) => (
-                  <div key={s.id || i} className="rounded-xl bg-white/40 dark:bg-white/40 dark:bg-slate-900/60 p-3 border border-black/10 dark:border-slate-700">
+                  <div key={s.id || i} className="rounded-xl bg-white/40 dark:bg-slate-900/60 p-3 border border-black/10 dark:border-slate-700">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-semibold text-slate-800 dark:text-white">{s.name}</p>
                       <span className="text-xs text-slate-600 dark:text-slate-400">{s.distance_km} km</span>
@@ -189,10 +189,10 @@ export default function SOSPage({ userInfo, onEditProfile, theme }) {
             </div>
           )}
 
-          <div className="bg-white/60 dark:bg-white/60 dark:bg-slate-800/60 rounded-xl p-5 border border-black/10 dark:border-slate-700 flex flex-col gap-4">
+          <div className="bg-white/60 dark:bg-slate-800/60 rounded-xl p-5 border border-black/10 dark:border-slate-700 flex flex-col gap-4">
             {userInfo ? (
               <div className="space-y-4">
-                <div className="rounded-xl bg-white/40 dark:bg-white/40 dark:bg-slate-900/50 p-4 border border-black/10 dark:border-slate-700">
+                <div className="rounded-xl bg-white/40 dark:bg-slate-900/50 p-4 border border-black/10 dark:border-slate-700">
                   <p className="text-xs uppercase tracking-wide text-slate-500">Using saved profile</p>
                   <p className="text-sm text-slate-800 dark:text-white mt-3">Name: <span className="text-slate-700 dark:text-slate-300">{userInfo.name}</span></p>
                   <p className="text-sm text-slate-800 dark:text-white">Emergency contact: <span className="text-slate-700 dark:text-slate-300">{userInfo.emergency_contact}</span></p>
@@ -273,7 +273,7 @@ export default function SOSPage({ userInfo, onEditProfile, theme }) {
           )}
 
           {log.length > 0 && (
-            <div className="bg-white/60 dark:bg-white/60 dark:bg-slate-800/60 rounded-xl p-4 border border-black/10 dark:border-slate-700">
+            <div className="bg-white/60 dark:bg-slate-800/60 rounded-xl p-4 border border-black/10 dark:border-slate-700">
               <p className="text-xs text-slate-600 dark:text-slate-400 font-semibold mb-3">RECENT ALERTS ({log.length})</p>
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {log.slice().reverse().map((a, i) => (

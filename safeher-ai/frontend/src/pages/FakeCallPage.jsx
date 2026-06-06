@@ -100,7 +100,7 @@ export default function FakeCallPage() {
         </p>
       </div>
 
-      <div className="flex flex-col gap-4 rounded-3xl border border-black/10 dark:border-slate-700/80 bg-white/40 dark:bg-white/40 dark:bg-slate-900/70 p-6">
+      <div className="flex flex-col gap-4 rounded-3xl border border-black/10 dark:border-slate-700/80 bg-white/40 dark:bg-slate-900/70 p-6">
         <div className="space-y-4">
           <div>
             <label className="text-sm text-slate-600 dark:text-slate-400 uppercase tracking-wider font-semibold">

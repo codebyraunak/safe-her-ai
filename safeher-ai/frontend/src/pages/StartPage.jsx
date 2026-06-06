@@ -76,7 +76,7 @@ export default function StartPage({ userInfo, setUserInfo, onComplete }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 flex-1">
-        <div className="bg-white/60 dark:bg-white/60 dark:bg-slate-800/60 rounded-2xl p-6 border border-black/10 dark:border-slate-700 space-y-4">
+        <div className="bg-white/60 dark:bg-slate-800/60 rounded-2xl p-6 border border-black/10 dark:border-slate-700 space-y-4">
           <div>
             <label className="text-xs text-slate-600 dark:text-slate-400 block mb-2">Full Name *</label>
             <input
@@ -118,11 +118,11 @@ export default function StartPage({ userInfo, setUserInfo, onComplete }) {
           </button>
         </div>
 
-        <div className="bg-white/60 dark:bg-white/60 dark:bg-slate-800/60 rounded-2xl p-6 border border-black/10 dark:border-slate-700">
+        <div className="bg-white/60 dark:bg-slate-800/60 rounded-2xl p-6 border border-black/10 dark:border-slate-700">
           <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">Your profile will be stored locally on this device and used automatically on the SOS page.</p>
 
           <div className="space-y-3">
-            <div className="rounded-xl bg-white/40 dark:bg-white/40 dark:bg-slate-900/50 p-4 border border-black/10 dark:border-slate-700">
+            <div className="rounded-xl bg-white/40 dark:bg-slate-900/50 p-4 border border-black/10 dark:border-slate-700">
               <p className="text-xs uppercase tracking-wide text-slate-500">Saved details</p>
               <p className="mt-3 text-sm text-slate-800 dark:text-white">Name: <span className="text-slate-700 dark:text-slate-300">{name || "Not set yet"}</span></p>
               <p className="text-sm text-slate-800 dark:text-white">Emergency contact: <span className="text-slate-700 dark:text-slate-300">{contact || "Not set yet"}</span></p>
