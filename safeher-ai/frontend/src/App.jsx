@@ -271,10 +271,6 @@ export default function App() {
               {installed ? "✓ Installed" : "⬇️ Install app"}
             </button>
 
-            <div className="text-[10px] uppercase tracking-[0.25em] text-slate-500 font-bold">
-              App version
-            </div>
-            <div className="text-sm font-medium text-slate-300">SafeHer AI v2.0</div>
           </div>
         </div>
       </aside>
