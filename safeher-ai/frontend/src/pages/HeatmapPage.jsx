@@ -197,7 +197,7 @@ const DATA_BOUNDS = [
 /* ─────────────────────────────────────────────
    Main Page
 ───────────────────────────────────────────── */
-export default function HeatmapPage({ userInfo, currentPos, theme }) {
+export default function HeatmapPage({ userInfo, theme }) {
   const [points,        setPoints]        = useState([]);
   const [hotspots,      setHotspots]      = useState([]);
   const [selectedHour,  setSelectedHour]  = useState(new Date().getHours());
