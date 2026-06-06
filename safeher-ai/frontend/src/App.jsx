@@ -167,27 +167,33 @@ export default function App() {
 
   if (!hasCompletedProfile) {
     return (
-      <div className="min-h-screen bg-slate-950 p-4 lg:p-8 flex items-center justify-center">
-        <div className="w-full max-w-5xl bg-slate-900 border border-slate-800 shadow-2xl rounded-3xl p-6 lg:p-10">
-          <StartPage 
-            userInfo={userInfo} 
-            setUserInfo={(info) => {
-              setUserInfo(info);
-              setPage("heatmap");
-            }} 
-            onComplete={() => setPage("heatmap")}
-          />
+      <div className="min-h-screen bg-gradient-to-br from-[#050510] via-indigo-950 to-[#0a0a1a] p-4 lg:p-8 flex items-center justify-center">
+        <div className="w-full max-w-5xl glass-panel rounded-3xl p-6 lg:p-10 relative overflow-hidden">
+          {/* Subtle glowing orbs behind the glass panel */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-pink-600/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-violet-600/20 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+          
+          <div className="relative z-10">
+            <StartPage 
+              userInfo={userInfo} 
+              setUserInfo={(info) => {
+                setUserInfo(info);
+                setPage("heatmap");
+              }} 
+              onComplete={() => setPage("heatmap")}
+            />
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen bg-slate-900 text-white">
-      <header className="fixed inset-x-0 top-0 z-40 flex items-center justify-between gap-3 border-b border-slate-700/50 bg-slate-900/40 px-4 py-3 shadow-lg shadow-black/10 backdrop-blur-md lg:hidden">
+    <div className="relative min-h-screen bg-gradient-to-br from-[#050510] via-[#0a0a1a] to-[#0f0b1a] text-white selection:bg-pink-500/30 font-['Outfit']">
+      <header className="fixed inset-x-0 top-0 z-40 flex items-center justify-between gap-3 border-b border-white/10 bg-[#050510]/60 px-4 py-3 shadow-lg backdrop-blur-xl lg:hidden">
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="rounded-full bg-pink-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-pink-500/20 hover:bg-pink-500 transition hover:shadow-pink-500/40"
+          className="rounded-full bg-gradient-to-r from-pink-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-pink-500/20 hover:shadow-pink-500/40 transition active:scale-95"
           aria-label="Toggle menu"
         >
           {sidebarOpen ? "Close" : "Menu"}
@@ -198,19 +204,19 @@ export default function App() {
 
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-slate-900/70 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      <aside className={`fixed inset-y-0 left-0 z-40 transform border-r border-slate-700/50 bg-slate-950/70 backdrop-blur-lg transition-all duration-300 ease-in-out w-72 ${sidebarWidthClass} ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:fixed lg:top-0 lg:left-0 lg:bottom-0 lg:h-screen`}>
-        <div className="flex items-center justify-between gap-3 border-b border-slate-700/50 px-5 py-4">
+      <aside className={`fixed inset-y-0 left-0 z-40 transform glass-panel border-l-0 border-t-0 border-b-0 transition-all duration-300 ease-in-out w-72 flex flex-col ${sidebarWidthClass} ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:fixed lg:top-0 lg:left-0 lg:bottom-0 lg:h-screen`}>
+        <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-5 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="text-2xl">🛡️</div>
+            <div className="text-2xl drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]">🛡️</div>
             {!sidebarCollapsed && (
               <div>
-                <h1 className="text-xl font-bold text-white">SafeHer <span className="text-pink-500">AI</span></h1>
-                <p className="text-xs text-slate-500">Predict. Alert. Protect.</p>
+                <h1 className="text-xl font-bold tracking-tight text-white">SafeHer <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-violet-400">AI</span></h1>
+                <p className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold mt-0.5">Predict. Alert. Protect.</p>
               </div>
             )}
           </div>
@@ -218,14 +224,14 @@ export default function App() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSidebarCollapsed((prev) => !prev)}
-              className="rounded-full bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-300 transition hover:bg-slate-700"
+              className="rounded-full bg-white/5 border border-white/10 px-3 py-2 text-sm font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white"
               aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {sidebarCollapsed ? "➡️" : "⬅️"}
             </button>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden rounded-full bg-slate-800 px-3 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-700"
+              className="lg:hidden rounded-full bg-white/5 border border-white/10 px-3 py-2 text-sm font-semibold text-slate-300 hover:bg-white/10 hover:text-white"
               aria-label="Close sidebar"
             >
               ✕
@@ -233,69 +239,80 @@ export default function App() {
           </div>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-2 py-4">
+        <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-1">
           {NAV.map((item) => (
             <button
               key={item.id}
               onClick={() => handleNavigate(item.id)}
               title={item.label}
-              className={`group flex w-full ${sidebarCollapsed ? "justify-center" : "items-start"} gap-3 rounded-2xl px-4 py-3 text-left transition ${
+              className={`group flex w-full ${sidebarCollapsed ? "justify-center" : "items-center"} gap-4 rounded-2xl px-4 py-3.5 text-left transition-all duration-300 ${
                 page === item.id
-                  ? "bg-pink-600/15 text-white ring-1 ring-pink-500"
-                  : "text-slate-300 hover:bg-slate-900 hover:text-white"
+                  ? "bg-gradient-to-r from-pink-500/20 to-violet-500/20 text-white ring-1 ring-pink-500/50 shadow-[0_0_15px_rgba(236,72,153,0.15)]"
+                  : "text-slate-400 hover:bg-white/5 hover:text-white"
               }`}
             >
-              <span className="text-xl leading-none">{item.icon}</span>
+              <span className={`text-xl transition-transform duration-300 ${page === item.id ? "scale-110 drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]" : "group-hover:scale-110"}`}>{item.icon}</span>
               {!sidebarCollapsed && (
                 <div>
-                  <p className="text-sm font-semibold">{item.label}</p>
-                  <p className="text-xs text-slate-500 group-hover:text-slate-300">{item.desc}</p>
+                  <p className={`text-sm font-semibold tracking-wide ${page === item.id ? "text-white" : "text-slate-300 group-hover:text-white"}`}>{item.label}</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">{item.desc}</p>
                 </div>
               )}
             </button>
           ))}
         </nav>
 
-        <div className={`border-t border-slate-800 ${sidebarCollapsed ? "px-2 py-4" : "px-5 py-4"}`}>
-          <div className="space-y-3">
+        <div className={`border-t border-white/10 shrink-0 ${sidebarCollapsed ? "px-2 py-4" : "px-5 py-6"} bg-black/20`}>
+          <div className="space-y-4">
             <button
               onClick={promptInstall}
-              className="w-full rounded-2xl bg-pink-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-pink-500"
+              className="w-full glass-button rounded-xl px-4 py-3.5 text-sm font-bold text-white"
             >
               {installed ? "✓ Installed" : "⬇️ Install app"}
             </button>
 
-            <div className="text-xs uppercase tracking-[0.2em] text-slate-500">
+            <div className="text-[10px] uppercase tracking-[0.25em] text-slate-500 font-bold">
               App version
             </div>
-            <div className="text-sm text-slate-300">SafeHer AI v1.0</div>
+            <div className="text-sm font-medium text-slate-300">SafeHer AI v2.0</div>
           </div>
         </div>
       </aside>
 
-      <header className="hidden lg:flex fixed inset-x-0 top-0 z-50 items-center justify-between border-b border-slate-700/50 bg-slate-950/40 px-6 py-4 shadow-lg shadow-black/10 backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <div className="text-2xl animate-pulse-fast">🛡️</div>
+      <header className="hidden lg:flex fixed inset-x-0 top-0 z-50 items-center justify-between border-b border-white/5 bg-[#050510]/40 px-8 py-4 shadow-xl backdrop-blur-xl pointer-events-none">
+        <div className="flex items-center gap-4">
+          <div className="text-2xl drop-shadow-[0_0_10px_rgba(236,72,153,0.8)] animate-pulse-slow">🛡️</div>
           <div>
-            <div className="text-sm font-semibold uppercase tracking-wide text-white drop-shadow-md">SafeHer AI</div>
-            <div className="text-xs text-pink-400 drop-shadow-md">Predict. Alert. Protect.</div>
+            <div className="text-sm font-bold uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-violet-400">SafeHer AI</div>
+            <div className="text-[10px] uppercase tracking-widest font-semibold text-slate-400 mt-0.5">Predict. Alert. Protect.</div>
           </div>
+        </div>
+        <div className="flex items-center gap-4 pointer-events-auto">
+          {userInfo?.name && (
+            <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 backdrop-blur-md">
+              <span className="text-xl">👩🏽‍💻</span>
+              <span className="text-sm font-semibold text-white">{userInfo.name}</span>
+            </div>
+          )}
         </div>
       </header>
 
       <main className={`relative min-h-screen overflow-x-hidden ${mainMarginClass} pt-16 lg:pt-24`}>
-        <div className="h-16 lg:hidden" />
-        <div className="p-6 lg:p-8">
-          <div>
-            <PageComponent
-              userInfo={userInfo}
-              setUserInfo={setUserInfo}
-              onComplete={() => setPage("heatmap")}
-              onEditProfile={() => setPage("start")}
-              monitor={monitor}
-            />
-          </div>
+        {/* Main background glow effect */}
+        <div className="fixed top-[20%] left-[40%] w-[800px] h-[800px] bg-pink-600/10 rounded-full blur-[150px] pointer-events-none opacity-50" />
+        <div className="fixed top-[50%] left-[60%] w-[600px] h-[600px] bg-violet-600/10 rounded-full blur-[120px] pointer-events-none opacity-40" />
+        
+        <div className="relative z-10 p-4 lg:p-8">
+          <PageComponent 
+            userInfo={userInfo} 
+            setUserInfo={setUserInfo}
+            currentPos={currentPos}
+            onComplete={() => setPage("heatmap")}
+            onEditProfile={() => setPage("start")}
+            monitor={monitor}
+          />
         </div>
+        <div className="h-16 lg:hidden" />
       </main>
     </div>
   );

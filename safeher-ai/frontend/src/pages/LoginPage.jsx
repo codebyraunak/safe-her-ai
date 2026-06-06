@@ -49,22 +49,22 @@ export default function LoginPage({ onLoginSuccess }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#050510] via-indigo-950 to-[#0a0a1a] flex flex-col items-center justify-center p-4 font-['Outfit']">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none flex justify-center items-center">
-        <div className="w-[800px] h-[800px] bg-pink-600/10 rounded-full blur-[120px] opacity-50 translate-y-[-20%]" />
-        <div className="absolute w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[100px] opacity-40 translate-x-[20%] translate-y-[20%]" />
+        <div className="w-[800px] h-[800px] bg-pink-600/20 rounded-full blur-[120px] opacity-60 translate-y-[-20%]" />
+        <div className="absolute w-[600px] h-[600px] bg-violet-600/20 rounded-full blur-[100px] opacity-50 translate-x-[20%] translate-y-[20%]" />
       </div>
 
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-10">
-          <div className="text-5xl mb-4 animate-bounce-slow">🛡️</div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">SafeHer <span className="text-pink-500">AI</span></h1>
-          <p className="text-slate-400 mt-2">Predict. Alert. Protect.</p>
+          <div className="text-5xl mb-4 drop-shadow-[0_0_15px_rgba(236,72,153,0.8)] animate-pulse-slow">🛡️</div>
+          <h1 className="text-4xl font-bold text-white tracking-tight">SafeHer <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-violet-400">AI</span></h1>
+          <p className="text-slate-400 mt-2 tracking-widest uppercase text-xs font-semibold">Predict. Alert. Protect.</p>
         </div>
 
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-8 shadow-2xl">
-          <h2 className="text-xl font-semibold text-white mb-6">
+        <div className="glass-panel rounded-3xl p-8">
+          <h2 className="text-2xl font-bold text-white mb-6 tracking-wide">
             {step === 1 ? "Welcome Back" : "Verify Phone Number"}
           </h2>
 
@@ -85,14 +85,14 @@ export default function LoginPage({ onLoginSuccess }) {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="e.g. +91 9876543210"
-                    className="w-full bg-slate-800/50 border border-slate-700 text-white rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                    className="w-full bg-white/5 border border-white/10 text-white rounded-xl py-3.5 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:bg-white/10 transition-all placeholder:text-slate-500 font-medium"
                   />
                 </div>
               </div>
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-pink-600 hover:bg-pink-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-pink-500/20 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full glass-button text-white font-bold tracking-wide py-3.5 rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed mt-2"
               >
                 {loading ? "Sending OTP..." : "Get OTP"}
               </button>
@@ -113,13 +113,13 @@ export default function LoginPage({ onLoginSuccess }) {
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
                   placeholder="1432"
-                  className="w-full bg-slate-800/50 border border-slate-700 text-white rounded-xl py-3 px-4 text-center text-2xl tracking-[0.5em] font-mono focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                  className="w-full bg-white/5 border border-white/10 text-white rounded-xl py-4 px-4 text-center text-3xl tracking-[0.5em] font-mono focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:bg-white/10 transition-all placeholder:text-slate-600"
                 />
               </div>
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-pink-600 hover:bg-pink-500 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-pink-500/20 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full glass-button text-white font-bold tracking-wide py-3.5 rounded-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed mt-2"
               >
                 {loading ? "Verifying..." : "Verify & Login"}
               </button>

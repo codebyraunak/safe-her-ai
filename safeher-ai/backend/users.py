@@ -88,6 +88,31 @@ def find_nearest_user(
             }
     return best
 
+def find_users_within_radius(
+    lat: float,
+    lng: float,
+    exclude_user_id: Optional[str] = None,
+    radius_km: float = 0.5,
+) -> list:
+    """Returns all active users within the given radius (default 500m)."""
+    candidates = [
+        u for u in USERS
+        if u.get("active") and u["user_id"] != exclude_user_id
+    ]
+    nearby = []
+    for user in candidates:
+        distance = haversine_dist(lat, lng, user["lat"], user["lng"])
+        if distance <= radius_km:
+            nearby.append({
+                "user_id": user["user_id"],
+                "name": user["name"],
+                "lat": user["lat"],
+                "lng": user["lng"],
+                "last_seen": user["last_seen"],
+                "distance_km": round(distance, 2),
+            })
+    return sorted(nearby, key=lambda u: u["distance_km"])
+
 
 def deactivate_user(user_id: str) -> bool:
     """Mark a user as inactive (soft delete). Returns True if user was found."""

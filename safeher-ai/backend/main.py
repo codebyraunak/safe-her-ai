@@ -347,12 +347,13 @@ def sos_trigger(req: SOSRequest):
     # FIX: Guard against empty POLICE_STATIONS list before triggering
     try:
         alert = trigger_sos(
-            req.lat,
-            req.lng,
-            req.user_name or "Anonymous",
-            req.message or "",
-            req.emergency_contact or "",
-            req.medical_details or "",
+            lat=req.lat,
+            lng=req.lng,
+            user_id=req.user_id,
+            user_name=req.user_name or "Anonymous",
+            message=req.message or "",
+            emergency_contact=req.emergency_contact or "",
+            medical_details=req.medical_details or "",
         )
     except ValueError as e:
         traceback.print_exc()

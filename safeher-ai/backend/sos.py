@@ -80,11 +80,13 @@ def find_all_stations(lat: float, lng: float) -> list:
 def trigger_sos(
     lat: float,
     lng: float,
+    user_id: str = None,
     user_name: str = "Anonymous",
     message: str = "",
     emergency_contact: str = "",
     medical_details: str = "",
 ) -> dict:
+    from users import find_users_within_radius
     station   = find_nearest_station(lat, lng)   # raises ValueError if no stations
     alert_id  = f"SOS-{random.randint(10000, 99999)}"
     timestamp = datetime.now().isoformat()
@@ -92,15 +94,19 @@ def trigger_sos(
     # FIX: Estimate response time more realistically (30 km/h average city speed)
     estimated_response = round((station["distance_km"] / 30) * 60, 1)  # minutes
 
+    nearby_helpers = find_users_within_radius(lat, lng, exclude_user_id=user_id, radius_km=0.5)
+
     alert = {
         "alert_id": alert_id,
         "timestamp": timestamp,
+        "user_id": user_id,
         "user": user_name,
         "location": {"lat": lat, "lng": lng},
         "message": message or "Emergency SOS triggered",
         "emergency_contact": emergency_contact,
         "medical_details": medical_details,
         "nearest_station": station,
+        "nearby_helpers": nearby_helpers,
         "status": "DISPATCHED",
         "estimated_response_min": estimated_response,
         "live_location_url": f"https://maps.google.com/?q={lat},{lng}",
@@ -114,6 +120,11 @@ def trigger_sos(
         f"User: {user_name} | Loc: {lat},{lng} | "
         f"ETA: ~{estimated_response} min"
     )
+    
+    if nearby_helpers:
+        print(f"[COMMUNITY GEO-FENCE] Alerted {len(nearby_helpers)} nearby app users within 500m of {user_name}.")
+        for h in nearby_helpers:
+            print(f"  → Pushing urgent notification to {h['name']} ({h['distance_km']*1000:.0f}m away)")
 
     # Send Real SMS via Twilio
     if emergency_contact:
