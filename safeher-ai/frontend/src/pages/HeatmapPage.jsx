@@ -275,6 +275,18 @@ export default function HeatmapPage({ userInfo, theme }) {
   const submitDangerPin = async () => {
     try {
       await reportDangerPin(reportModal.lat, reportModal.lng, reportType, reportDesc);
+      
+      // Add the new pin to the live activity feed immediately
+      const newIncident = {
+        id: Date.now().toString(),
+        type: reportType,
+        area: "Custom Pinned Location",
+        relative_time: "Just now",
+        lat: reportModal.lat,
+        lng: reportModal.lng
+      };
+      setIncidents((prev) => [newIncident, ...prev]);
+
       setReportModal({ open: false, lat: null, lng: null });
       setReportDesc("");
       fetchHeatmap();
@@ -530,6 +542,32 @@ export default function HeatmapPage({ userInfo, theme }) {
             {nearestHelper ? `${nearestHelper.name} (${nearestHelper.distance_km} km)` : "No helper nearby"}
           </p>
           <p className="text-xs text-slate-500 mt-2">Routes your emergency to the closest available user.</p>
+          
+          {nearestHelper && (
+            <button 
+              onClick={() => {
+                const sendNotif = () => {
+                  new Notification("🚨 Emergency Alert Received!", {
+                    body: `Someone near you needs help! (Demo notification to ${nearestHelper.name})`,
+                    icon: "/favicon.ico",
+                  });
+                };
+                if ("Notification" in window && Notification.permission === "granted") {
+                  sendNotif();
+                } else if ("Notification" in window && Notification.permission !== "denied") {
+                  Notification.requestPermission().then(permission => {
+                    if (permission === "granted") sendNotif();
+                    else alert(`[Demo] Notification sent to ${nearestHelper.name}'s phone!`);
+                  });
+                } else {
+                  alert(`[Demo] Notification sent to ${nearestHelper.name}'s phone!`);
+                }
+              }}
+              className="mt-3 w-full rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-500 px-3 py-2 text-sm font-semibold text-white shadow hover:from-indigo-500 hover:to-indigo-400 transition"
+            >
+              Ping Helper (Demo Notification)
+            </button>
+          )}
         </div>
       </div>
 
