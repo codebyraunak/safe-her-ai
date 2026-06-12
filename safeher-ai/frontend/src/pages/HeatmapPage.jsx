@@ -259,12 +259,7 @@ export default function HeatmapPage({ userInfo, theme }) {
     }
   }, []);
 
-  useEffect(() => {
-    if (currentHour !== appliedHour && appliedHour === selectedHour && currentHour !== selectedHour) {
-      setSelectedHour(currentHour);
-      setAppliedHour(currentHour);
-    }
-  }, [currentHour, appliedHour, selectedHour]);
+  // Removed buggy auto-reset effect
 
   useEffect(() => {
     if (!currentPos) return;
@@ -517,7 +512,7 @@ export default function HeatmapPage({ userInfo, theme }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: "Total Zones",     value: points.length,                          color: "text-pink-400"    },
-          { label: "High Risk Zones", value: points.filter(p => p.risk >= 4).length, color: "text-red-400"     },
+          { label: "Critical Zones",  value: points.filter(p => p.risk === 5).length, color: "text-red-400"     },
           { label: "DBSCAN Hotspots", value: hotspots.length,                        color: "text-amber-400"   },
           { label: "Smart Check",     value: homeSaved ? "Ready" : "Setup required", color: homeSaved ? "text-emerald-400" : "text-slate-600 dark:text-slate-400" },
         ].map(s => (
