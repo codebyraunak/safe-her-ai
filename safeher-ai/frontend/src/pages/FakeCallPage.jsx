@@ -23,14 +23,102 @@ export default function FakeCallPage() {
   }, [isCounting, timer]);
 
   useEffect(() => {
-    let interval;
+    let durationInterval;
+    let recognition = null;
+    let activeUtterance = null;
+    let currentStep = 0;
+
+    const conversationScript = [
+      `Hey, it's ${callerName}. I'm looking at your location. Are you almost home?`,
+      `Okay, got it. I'm going to stay on the line with you. Just keep your phone out.`,
+      `I see you on the map. You're doing great. I'll be waiting outside for you.`
+    ];
+
+    const speakLine = (text, onEndCallback) => {
+      activeUtterance = new SpeechSynthesisUtterance(text);
+      activeUtterance.pitch = 1.0;
+      activeUtterance.rate = 0.9;
+      
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        const engVoice = voices.find(v => v.lang.includes('en'));
+        if (engVoice) activeUtterance.voice = engVoice;
+      }
+      
+      activeUtterance.onend = onEndCallback;
+      window.speechSynthesis.speak(activeUtterance);
+    };
+
+    const listenForResponse = (onSpeechDetected) => {
+      const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRec) {
+        // Fallback: just wait 3 seconds if speech recognition isn't supported
+        setTimeout(onSpeechDetected, 3000);
+        return;
+      }
+
+      recognition = new SpeechRec();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      
+      let speechHandled = false;
+      
+      recognition.onresult = (event) => {
+        if (!speechHandled) {
+          speechHandled = true;
+          recognition.stop();
+          // Add a slight pause after they start speaking to make it feel natural
+          setTimeout(onSpeechDetected, 1500); 
+        }
+      };
+
+      recognition.onerror = () => {
+        if (!speechHandled) {
+          speechHandled = true;
+          setTimeout(onSpeechDetected, 2500); // Fallback on error
+        }
+      };
+
+      recognition.start();
+    };
+
+    const runConversation = () => {
+      if (currentStep >= conversationScript.length || !isAnswered) return;
+      
+      // AI Speaks
+      speakLine(conversationScript[currentStep], () => {
+        currentStep++;
+        if (currentStep < conversationScript.length && isAnswered) {
+          // Listen for user to reply
+          listenForResponse(() => {
+            if (isAnswered) runConversation();
+          });
+        }
+      });
+    };
+
     if (isAnswered) {
-      interval = setInterval(() => {
+      durationInterval = setInterval(() => {
         setCallDuration((prev) => prev + 1);
       }, 1000);
+      
+      // Start the interactive flow
+      runConversation();
+    } else {
+      window.speechSynthesis.cancel();
+      if (recognition) {
+        try { recognition.stop(); } catch(e) {}
+      }
     }
-    return () => clearInterval(interval);
-  }, [isAnswered]);
+
+    return () => {
+      clearInterval(durationInterval);
+      window.speechSynthesis.cancel();
+      if (recognition) {
+        try { recognition.stop(); } catch(e) {}
+      }
+    };
+  }, [isAnswered, callerName]);
 
   const startTimer = (seconds) => {
     setTimer(seconds);

@@ -119,6 +119,22 @@ export default function SOSPage({ userInfo, onEditProfile, theme }) {
       );
       setResult(data);
       if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 500]);
+
+      // Automatically notify the nearest helper for the demo
+      if (data.nearest_helper) {
+        const sendNotif = () => {
+          new Notification("🚨 Emergency Alert Received!", {
+            body: `Someone near you needs help! (Demo notification to ${data.nearest_helper.name})`,
+            icon: "/favicon.ico",
+          });
+        };
+        if ("Notification" in window && Notification.permission === "granted") {
+          sendNotif();
+        } else if ("Notification" in window && Notification.permission !== "denied") {
+          Notification.requestPermission().then(p => p === "granted" && sendNotif());
+        }
+      }
+
     } catch {
       setError("Network error. Falling back to offline SMS...");
       if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
