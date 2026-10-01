@@ -139,7 +139,7 @@ def get_segment_lighting(lat: float, lng: float, hour: int = None) -> dict:
     }
 
 @lru_cache(maxsize=128)
-def fetch_osm_road_segments(center_lat: float, center_lng: float, hour: int = None, radius_m: int = 4200) -> list:
+def fetch_osm_road_segments(center_lat: float, center_lng: float, hour: int = None, radius_m: int = 2200) -> list:
     query = f"""
     [out:json][timeout:12];
     way(around:{radius_m},{center_lat},{center_lng})["highway"~"{ROAD_TYPES}"];
@@ -148,9 +148,10 @@ def fetch_osm_road_segments(center_lat: float, center_lng: float, hour: int = No
     headers = {"User-Agent": "SafeHerAI/1.0"}
     last_error = None
     response = None
-    for url in OVERPASS_URLS:
+    for index, url in enumerate(OVERPASS_URLS):
         try:
-            response = requests.post(url, data={"data": query}, headers=headers, timeout=7)
+            timeout = 15 if index == 0 else 5
+            response = requests.post(url, data={"data": query}, headers=headers, timeout=timeout)
             response.raise_for_status()
             break
         except Exception as exc:
@@ -222,13 +223,9 @@ def generate_lighting_map(center_lat: float, center_lng: float, hour: int = None
     if hour is None:
         hour = datetime.now().hour
 
-    try:
-        segments = fetch_osm_road_segments(center_lat, center_lng, hour)
-    except requests.RequestException:
-        segments = []
-
+    segments = fetch_osm_road_segments(center_lat, center_lng, hour)
     if not segments:
-        return generate_demo_street_grid(center_lat, center_lng, hour)
+        raise RuntimeError("No street geometry found for this area.")
     return segments
 
 # ── City-wide energy savings estimate ────────────────────────────────────────
