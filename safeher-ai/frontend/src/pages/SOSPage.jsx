@@ -313,10 +313,7 @@ export default function SOSPage({ userInfo, onEditProfile, theme }) {
             {/* Re-center map when pos updates */}
             <RecenterMap pos={pos} />
 
-            <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-              attribution='&copy; OpenStreetMap &copy; CartoDB'
-            />
+           <TileLayer url={TILE_DARK} attribution={TILE_ATTRIBUTION} />
 
             {/* User location */}
             <Circle
