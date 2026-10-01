@@ -1,3 +1,4 @@
+import { TILE_DARK, TILE_ATTRIBUTION } from "../mapTiles";
 import { TILE_DARK, TILE_LIGHT, TILE_ATTRIBUTION } from "../mapTiles";
 import { useEffect, useState, useCallback, useRef } from "react";
 import {
@@ -418,10 +419,10 @@ export default function HeatmapPage({ userInfo, theme }) {
           style={{ height: "420px", width: "100%" }}
         >
           <TileLayer
-            url={theme === "dark" ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png" : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"}
-            attribution='&copy; OpenStreetMap &copy; CartoDB'
-            opacity={0.82}
-          />
+  url={theme === "dark" ? TILE_DARK : TILE_LIGHT}
+  attribution={TILE_ATTRIBUTION}
+  opacity={0.82}
+/>
 
           {/* Grey base for the available data area before risk colors load */}
           <Rectangle
