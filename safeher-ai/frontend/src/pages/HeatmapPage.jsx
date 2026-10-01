@@ -417,8 +417,8 @@ export default function HeatmapPage({ userInfo, theme }) {
           style={{ height: "420px", width: "100%" }}
         >
           <TileLayer
-            url={theme === "dark" ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png" : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"}
-            attribution='&copy; OpenStreetMap &copy; CartoDB'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
             opacity={0.82}
           />
 

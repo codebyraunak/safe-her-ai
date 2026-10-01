@@ -438,8 +438,8 @@ export default function RoutePage({ theme }) {
       <div className="flex-1 rounded-2xl overflow-hidden border border-black/10 dark:border-slate-700 h-[400px] relative z-0">
         <MapContainer center={DEFAULT_CENTER} zoom={13} style={{ height: "400px", width: "100%" }}>
           <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            attribution='&copy; OpenStreetMap &copy; CartoDB'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
           />
           {routes.length > 0 && <FitBounds routes={routes} />}
 
