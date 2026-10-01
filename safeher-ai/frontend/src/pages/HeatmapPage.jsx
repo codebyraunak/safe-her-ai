@@ -1,3 +1,4 @@
+import { TILE_DARK, TILE_LIGHT, TILE_ATTRIBUTION } from "../mapTiles";
 import { useEffect, useState, useCallback, useRef } from "react";
 import {
   MapContainer, TileLayer,
