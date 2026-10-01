@@ -150,7 +150,7 @@ def fetch_osm_road_segments(center_lat: float, center_lng: float, hour: int = No
     response = None
     for url in OVERPASS_URLS:
         try:
-            response = requests.post(url, data={"data": query}, headers=headers, timeout=18)
+            response = requests.post(url, data={"data": query}, headers=headers, timeout=7)
             response.raise_for_status()
             break
         except Exception as exc:
@@ -222,9 +222,13 @@ def generate_lighting_map(center_lat: float, center_lng: float, hour: int = None
     if hour is None:
         hour = datetime.now().hour
 
-    segments = fetch_osm_road_segments(center_lat, center_lng, hour)
+    try:
+        segments = fetch_osm_road_segments(center_lat, center_lng, hour)
+    except requests.RequestException:
+        segments = []
+
     if not segments:
-        raise RuntimeError("No street geometry found for this area.")
+        return generate_demo_street_grid(center_lat, center_lng, hour)
     return segments
 
 # ── City-wide energy savings estimate ────────────────────────────────────────
